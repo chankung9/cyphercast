@@ -9,10 +9,10 @@
 
 ## 🧑‍💻 Development Team
 
-| Role            | Member    | Focus                                |
-| --------------- | --------- | ------------------------------------ |
-| Dev / Technical | Worrapong | Anchor program, PDA architecture     |
-| Product         | Worrapong | Vision, roadmap, hackathon strategy  |
+| Role            | Member    | Focus                               |
+| --------------- | --------- | ----------------------------------- |
+| Dev / Technical | Worrapong | Anchor program, PDA architecture    |
+| Product         | Worrapong | Vision, roadmap, hackathon strategy |
 
 ---
 
@@ -82,6 +82,7 @@ MIT License - see [LICENSE](./LICENSE) file for details
 ## � Current Status: Phase 1 MVP (60% Complete)
 
 **✅ What's Working:**
+
 - Anchor program with PDA-based architecture
 - 5 core instructions: `create_stream`, `join_stream`, `submit_prediction`, `end_stream`, `claim_reward`
 - Participant and prediction tracking on-chain
@@ -89,6 +90,7 @@ MIT License - see [LICENSE](./LICENSE) file for details
 - Local deployment ready
 
 **🚧 In Development (Phase 2):**
+
 - `resolve_prediction` instruction for outcome determination
 - Full reward distribution with SOL transfers
 - React frontend with wallet integration
@@ -380,21 +382,25 @@ For more CLI commands, see [docs/CLI-QUICK-REF.md](./docs/CLI-QUICK-REF.md)
 ### Current Implementation:
 
 1. **Creator** uses CLI → creates a stream with `create_stream()`
+
    ```bash
    node cli/direct-cli.js create "Gaming Tournament" "Who will win?"
    ```
 
 2. **Viewer** joins stream with stake → `join_stream()`
+
    ```bash
    node cli/direct-cli.js join <STREAM_PDA> 0.1
    ```
 
 3. **Viewer** submits prediction → `submit_prediction()`
+
    ```bash
    node cli/direct-cli.js predict <STREAM_PDA> 0 0.05
    ```
 
 4. **Creator** ends stream → `end_stream()`
+
    ```bash
    node cli/direct-cli.js end <STREAM_PDA>
    ```
@@ -407,6 +413,7 @@ For more CLI commands, see [docs/CLI-QUICK-REF.md](./docs/CLI-QUICK-REF.md)
 All transactions are recorded on Solana blockchain with **sub-second finality**.
 
 ### Coming Soon (Phase 2):
+
 - React frontend with wallet integration
 - Automated reward calculation and distribution
 - Oracle integration for outcome resolution
@@ -415,27 +422,28 @@ All transactions are recorded on Solana blockchain with **sub-second finality**.
 
 ## 🧭 Roadmap
 
-| Phase                         | Goal                               | Key Deliverables                        | Status      |
-| ----------------------------- | ---------------------------------- | --------------------------------------- | ----------- |
-| **Phase 1 – MVP (Current)**   | Technical proof of concept         | ✅ Anchor program with PDA architecture<br/>✅ CLI testing tool<br/>✅ Core instructions (create, join, predict, end)<br/>⚠️ Basic reward framework | **60% Complete** |
-| **Phase 2 – Reward System**   | Complete reward distribution       | 🚧 resolve_prediction instruction<br/>🚧 SOL/token transfers<br/>🚧 Winner calculation logic<br/>🚧 React frontend UI | **Planned** |
-| **Phase 3 – Market Proof**    | Validate with real creators        | Beta site + social traction             | **Q1 2026** |
-| **Phase 4 – Ecosystem**       | DAO + Revenue split protocol       | Governance + mobile-native UX           | **Q2 2026** |
+| Phase                       | Goal                         | Key Deliverables                                                                                                                                    | Status           |
+| --------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| **Phase 1 – MVP (Current)** | Technical proof of concept   | ✅ Anchor program with PDA architecture<br/>✅ CLI testing tool<br/>✅ Core instructions (create, join, predict, end)<br/>⚠️ Basic reward framework | **60% Complete** |
+| **Phase 2 – Reward System** | Complete reward distribution | 🚧 resolve_prediction instruction<br/>🚧 SOL/token transfers<br/>🚧 Winner calculation logic<br/>🚧 React frontend UI                               | **Planned**      |
+| **Phase 3 – Market Proof**  | Validate with real creators  | Beta site + social traction                                                                                                                         | **Q1 2026**      |
+| **Phase 4 – Ecosystem**     | DAO + Revenue split protocol | Governance + mobile-native UX                                                                                                                       | **Q2 2026**      |
 
 ---
 
 ## 🧱 Technology Stack
 
-| Layer               | Technology                                         | Phase 1 Status |
-| ------------------- | -------------------------------------------------- | -------------- |
-| **Smart Contracts** | Anchor 0.31.1 (Rust), Solana PDAs                 | ✅ Implemented |
-| **Testing**         | TypeScript, Anchor Test Framework                 | ✅ Working     |
-| **CLI Tools**       | Node.js, @solana/web3.js                          | ✅ Working     |
-| **Network**         | Solana Localnet (Devnet planned)                  | ✅ Localnet    |
-| **Frontend**        | React, Vite, Wallet Adapter (Phase 2)             | 🚧 Planned     |
-| **Off-chain**       | Oracle integration (Phase 2)                      | 🚧 Planned     |
+| Layer               | Technology                            | Phase 1 Status |
+| ------------------- | ------------------------------------- | -------------- |
+| **Smart Contracts** | Anchor 0.31.1 (Rust), Solana PDAs     | ✅ Implemented |
+| **Testing**         | TypeScript, Anchor Test Framework     | ✅ Working     |
+| **CLI Tools**       | Node.js, @solana/web3.js              | ✅ Working     |
+| **Network**         | Solana Localnet (Devnet planned)      | ✅ Localnet    |
+| **Frontend**        | React, Vite, Wallet Adapter (Phase 2) | 🚧 Planned     |
+| **Off-chain**       | Oracle integration (Phase 2)          | 🚧 Planned     |
 
 **Core Dependencies:**
+
 - `@coral-xyz/anchor` - Solana framework
 - `@solana/web3.js` - Solana JavaScript API
 - `@solana/spl-token` - Token program (Phase 2)
@@ -447,11 +455,13 @@ All transactions are recorded on Solana blockchain with **sub-second finality**.
 ### PDA-Based Account Structure
 
 1. **Stream PDAs** - Deterministic addresses derived from:
+
    ```rust
    seeds = [b"stream", creator.key().as_ref(), stream_id.to_le_bytes()]
    ```
 
 2. **Participant PDAs** - Unique per viewer per stream:
+
    ```rust
    seeds = [b"participant", stream.key().as_ref(), viewer.key().as_ref()]
    ```
@@ -470,6 +480,7 @@ All transactions are recorded on Solana blockchain with **sub-second finality**.
 - ✅ **On-chain Audit Trail** - All transactions publicly verifiable
 
 ### Phase 2 Security Enhancements
+
 - 🚧 Token vault for stake management
 - 🚧 Multi-signature for critical operations
 - 🚧 Time-locks for dispute resolution
