@@ -7,9 +7,11 @@
 
 ## ⚡ Quick Links
 
+**🎯 START HERE:** **[Executive Summary](./EXECUTIVE_SUMMARY.md)** - Quick overview of situation and action plan
+
 **📌 Hackathon Submission Guides (9 Days Remaining):**
 
-- 📊 **[Progress Dashboard](./PROGRESS_DASHBOARD.md)** - Real-time status tracking with visual indicators ⭐ **START HERE**
+- 📊 **[Progress Dashboard](./PROGRESS_DASHBOARD.md)** - Real-time status tracking with visual indicators
 - 📋 **[Timeline Assessment & Recommendations](./TIMELINE_ASSESSMENT.md)** - Comprehensive 9-day roadmap with risk analysis
 - ⚡ **[Quick Action Guide](./QUICK_ACTION_GUIDE.md)** - Daily priorities, checklists, and emergency decision matrix
 - 🗺️ **[Implementation Roadmap](./IMPLEMENTATION_ROADMAP.md)** - Priority matrix, daily schedules, and success metrics
