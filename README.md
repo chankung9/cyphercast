@@ -5,6 +5,21 @@
 
 ---
 
+## ⚡ Quick Links
+
+**📌 Hackathon Submission Guides (9 Days Remaining):**
+
+- 📊 **[Progress Dashboard](./PROGRESS_DASHBOARD.md)** - Real-time status tracking with visual indicators ⭐ **START HERE**
+- 📋 **[Timeline Assessment & Recommendations](./TIMELINE_ASSESSMENT.md)** - Comprehensive 9-day roadmap with risk analysis
+- ⚡ **[Quick Action Guide](./QUICK_ACTION_GUIDE.md)** - Daily priorities, checklists, and emergency decision matrix
+- 🗺️ **[Implementation Roadmap](./IMPLEMENTATION_ROADMAP.md)** - Priority matrix, daily schedules, and success metrics
+- 🛠️ **[Code Templates](./CODE_TEMPLATES.md)** - Ready-to-use code snippets for smart contracts and frontend
+- 🇹🇭 **[ข้อเสนอแนะ (ภาษาไทย)](./RECOMMENDATIONS_TH.md)** - Thai language summary and recommendations
+
+**Current Status:** 🟡 25-30% Complete | **Risk Level:** 🔴 Critical | **Action Required:** Immediate implementation of reward system
+
+---
+
 ## 🚀 Overview
 
 **CypherCast** transforms passive viewing into active participation.  
