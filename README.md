@@ -1,7 +1,100 @@
 # 🎬 CypherCast — _Watch. Predict. Earn._
 
 > **On-chain Interactive Streaming Layer built on Solana.**  
-> Engage audiences with live predictions, token staking, and transparent rewards — powered by Anchor & SPL Tokens.
+> Engage audiences with live predictions, token staking, and transparent rewards — powered by Anchor & PDAs.
+
+[![Solana](https://img.shields.io/badge/Solana-Localnet-green)](https://solana.com)
+[![Anchor](https://img.shields.io/badge/Anchor-0.31.1-blue)](https://www.anchor-lang.com/)
+[![Phase](https:/---
+
+## 🧑‍💻 Development Team
+
+| Role            | Member    | Focus                                |
+| --------------- | --------- | ------------------------------------ |
+| Dev / Technical | Worrapong | Anchor program, PDA architecture     |
+| Product         | Worrapong | Vision, roadmap, hackathon strategy  |
+
+---
+
+## 📚 Documentation
+
+- [CLI Quick Reference](./docs/CLI-QUICK-REF.md) - Command-line tool usage
+- [Local Setup Guide](./LOCAL_SETUP.md) - Development environment setup
+- [Anchor Program](./programs/cyphercast/src/lib.rs) - Smart contract source code
+
+---
+
+## 🤝 Contributing
+
+This is a hackathon project currently in Phase 1 MVP. We welcome:
+
+- 🐛 Bug reports and feedback
+- 💡 Feature suggestions for Phase 2
+- 🔧 Pull requests (especially for reward distribution!)
+- 📖 Documentation improvements
+
+### Development Workflow
+
+```bash
+# 1. Fork and clone
+git clone https://github.com/YOUR_USERNAME/cyphercast.git
+
+# 2. Install dependencies
+npm install
+
+# 3. Make changes
+# Edit programs/cyphercast/src/lib.rs
+
+# 4. Build and test
+anchor build
+anchor test
+
+# 5. Submit PR
+```
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](./LICENSE) file for details
+
+---
+
+## 🌐 Built for Solana Cypherpunk Hackathon
+
+**October 2025** - [Hackathon Details](https://solana.com/hackathon)
+
+> "Streaming meets Web3. Viewers don't just watch — they own the moment."  
+> — CypherCast Team 🚀
+
+### 🔗 Links
+
+- **GitHub**: [github.com/chankung9/cyphercast](https://github.com/chankung9/cyphercast)
+- **Program ID**: `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF` (Localnet)
+- **Status**: Phase 1 MVP - 60% Complete
+
+---
+
+**⭐ Star this repo if you believe in the future of interactive Web3 streaming!**dge/Phase-1%20MVP-yellow)](https://github.com)
+
+---
+
+## � Current Status: Phase 1 MVP (60% Complete)
+
+**✅ What's Working:**
+- Anchor program with PDA-based architecture
+- 5 core instructions: `create_stream`, `join_stream`, `submit_prediction`, `end_stream`, `claim_reward`
+- Participant and prediction tracking on-chain
+- CLI demo tool for testing
+- Local deployment ready
+
+**🚧 In Development (Phase 2):**
+- `resolve_prediction` instruction for outcome determination
+- Full reward distribution with SOL transfers
+- React frontend with wallet integration
+- Devnet deployment
+
+**Program ID (Localnet):** `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF`
 
 ---
 
@@ -183,24 +276,27 @@ cyphercast/
 ## 🧱 Example: Anchor.toml
 
 ```toml
-[programs.devnet]
-cyphercast = "YourProgramIDHere"
+[programs.localnet]
+cyphercast = "5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
+cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "anchor test"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [workspace]
 members = [
   "programs/cyphercast"
 ]
 ```
+
+> **Note:** Program ID `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF` is for local development.  
+> For Devnet/Mainnet deployment, this will be updated.
 
 ---
 
@@ -239,80 +335,145 @@ members = [
 ### 2️⃣ Install & Build
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/cyphercast.git
+git clone https://github.com/chankung9/cyphercast.git
 cd cyphercast
 
-# install deps
+# Install dependencies
+npm install
 
-yarn install
-
-# build and deploy to devnet
-
+# Build the Anchor program
 anchor build
-anchor deploy
 
+# Run tests
+anchor test
+
+# Deploy to local validator
+anchor deploy
 ```
 
-### 3️⃣ Run Frontend
+### 3️⃣ Run CLI Demo
 
 ```bash
-cd app
-yarn dev
+# Using the direct CLI tool
+node cli/direct-cli.js demo
+
+# Or step by step:
+# 1. Create a stream
+node cli/direct-cli.js create "My Stream" "Prediction question?"
+
+# 2. Join stream (need stream PDA from step 1)
+node cli/direct-cli.js join <STREAM_PDA> 0.1
+
+# 3. Submit prediction
+node cli/direct-cli.js predict <STREAM_PDA> 0 0.05
+
+# 4. Fetch stream data
+node cli/direct-cli.js fetch <STREAM_PDA>
 ```
 
-Open: http://localhost:3000
+For more CLI commands, see [docs/CLI-QUICK-REF.md](./docs/CLI-QUICK-REF.md)
 
 ---
 
-## 🎥 Demo Flow
+## 🎥 Demo Flow (Phase 1 MVP)
 
-1. Creator opens app → connects wallet → creates a stream
+### Current Implementation:
 
-2. Viewer joins stream → connects wallet → sees prediction question
+1. **Creator** uses CLI → creates a stream with `create_stream()`
+   ```bash
+   node cli/direct-cli.js create "Gaming Tournament" "Who will win?"
+   ```
 
-3. Viewer stakes token (via Phantom)
+2. **Viewer** joins stream with stake → `join_stream()`
+   ```bash
+   node cli/direct-cli.js join <STREAM_PDA> 0.1
+   ```
 
-4. Creator or Oracle resolves outcome on-chain
+3. **Viewer** submits prediction → `submit_prediction()`
+   ```bash
+   node cli/direct-cli.js predict <STREAM_PDA> 0 0.05
+   ```
 
-5. Winners claim rewards instantly
+4. **Creator** ends stream → `end_stream()`
+   ```bash
+   node cli/direct-cli.js end <STREAM_PDA>
+   ```
 
-All interactions are verifiable on Solana Explorer.
-Transactions confirm in sub-second finality.
+5. **Verification** - View on-chain data
+   ```bash
+   node cli/direct-cli.js fetch <STREAM_PDA>
+   ```
+
+All transactions are recorded on Solana blockchain with **sub-second finality**.
+
+### Coming Soon (Phase 2):
+- React frontend with wallet integration
+- Automated reward calculation and distribution
+- Oracle integration for outcome resolution
 
 ---
 
 ## 🧭 Roadmap
 
-| Phase                         | Goal                               | Key Deliverables                        |
-| ----------------------------- | ---------------------------------- | --------------------------------------- |
-| **Phase 1 – MVP (Hackathon)** | Technical proof of concept         | Anchor programs + React UI + Demo video |
-| **Phase 2 – Product Proof**   | Reward distribution + mock oracles | TokenVault payouts + UX polish          |
-| **Phase 3 – Market Proof**    | Validate with real creators        | Beta site + social traction             |
-| **Phase 4 – Ecosystem**       | DAO + Revenue split protocol       | Governance + mobile-native UX           |
+| Phase                         | Goal                               | Key Deliverables                        | Status      |
+| ----------------------------- | ---------------------------------- | --------------------------------------- | ----------- |
+| **Phase 1 – MVP (Current)**   | Technical proof of concept         | ✅ Anchor program with PDA architecture<br/>✅ CLI testing tool<br/>✅ Core instructions (create, join, predict, end)<br/>⚠️ Basic reward framework | **60% Complete** |
+| **Phase 2 – Reward System**   | Complete reward distribution       | 🚧 resolve_prediction instruction<br/>🚧 SOL/token transfers<br/>🚧 Winner calculation logic<br/>🚧 React frontend UI | **Planned** |
+| **Phase 3 – Market Proof**    | Validate with real creators        | Beta site + social traction             | **Q1 2026** |
+| **Phase 4 – Ecosystem**       | DAO + Revenue split protocol       | Governance + mobile-native UX           | **Q2 2026** |
 
 ---
 
 ## 🧱 Technology Stack
 
-| Layer               | Technology                                         |
-| ------------------- | -------------------------------------------------- |
-| **Frontend**        | React, Vite, Solana Wallet Adapter, TypeScript     |
-| **Smart Contracts** | Anchor (Rust), Solana Program Library (SPL Token)  |
-| **Off-chain**       | Surfpool SDK (testing), IPFS, Oracle Script (mock) |
-| **Network**         | Solana Devnet                                      |
-| **Design**          | Dark neon Solana theme (teal / purple / black)     |
+| Layer               | Technology                                         | Phase 1 Status |
+| ------------------- | -------------------------------------------------- | -------------- |
+| **Smart Contracts** | Anchor 0.31.1 (Rust), Solana PDAs                 | ✅ Implemented |
+| **Testing**         | TypeScript, Anchor Test Framework                 | ✅ Working     |
+| **CLI Tools**       | Node.js, @solana/web3.js                          | ✅ Working     |
+| **Network**         | Solana Localnet (Devnet planned)                  | ✅ Localnet    |
+| **Frontend**        | React, Vite, Wallet Adapter (Phase 2)             | 🚧 Planned     |
+| **Off-chain**       | Oracle integration (Phase 2)                      | 🚧 Planned     |
+
+**Core Dependencies:**
+- `@coral-xyz/anchor` - Solana framework
+- `@solana/web3.js` - Solana JavaScript API
+- `@solana/spl-token` - Token program (Phase 2)
 
 ---
 
-## 🪙 Token & Security Model
+## 🪙 Security & Architecture
 
-1. SPL Tokens: Used for staking and rewards
+### PDA-Based Account Structure
 
-2. PDAs: Secure account ownership (no spoofing)
+1. **Stream PDAs** - Deterministic addresses derived from:
+   ```rust
+   seeds = [b"stream", creator.key().as_ref(), stream_id.to_le_bytes()]
+   ```
 
-3. On-chain Proofs: All predictions & payouts verifiable
+2. **Participant PDAs** - Unique per viewer per stream:
+   ```rust
+   seeds = [b"participant", stream.key().as_ref(), viewer.key().as_ref()]
+   ```
 
-4. Upgradeable Program: For safe iteration post-hackathon
+3. **Prediction PDAs** - One prediction per viewer per stream:
+   ```rust
+   seeds = [b"prediction", stream.key().as_ref(), viewer.key().as_ref()]
+   ```
+
+### Security Features
+
+- ✅ **No Storage Overhead** - PDAs are derived, not stored
+- ✅ **Ownership Verification** - Only program can modify accounts
+- ✅ **Deterministic** - Same inputs always generate same addresses
+- ✅ **Signer Validation** - Anchor framework checks all permissions
+- ✅ **On-chain Audit Trail** - All transactions publicly verifiable
+
+### Phase 2 Security Enhancements
+- 🚧 Token vault for stake management
+- 🚧 Multi-signature for critical operations
+- 🚧 Time-locks for dispute resolution
+- 🚧 Smart contract audit
 
 ---
 

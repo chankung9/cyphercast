@@ -1,0 +1,31 @@
+[features]
+seeds = false
+skip-lint = false
+
+[programs.localnet]
+cyphercast = "5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF"
+
+[programs.devnet]
+cyphercast = "5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[toolchain]
+anchor_version = "0.31.1"
+
+[[test.genesis]]
+address = "5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF"
+program = "target/deploy/cyphercast.so"
+
+[workspace]
+members = [
+    "programs/cyphercast"
+]

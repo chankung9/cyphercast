@@ -1,0 +1,33 @@
+{
+  "name": "cyphercast",
+  "version": "0.1.0",
+  "description": "CypherCast - Interactive streaming platform on Solana",
+  "main": "index.js",
+  "scripts": {
+    "build": "anchor build",
+    "deploy": "anchor deploy",
+    "test": "anchor test",
+    "test-local": "anchor test --skip-local-validator",
+    "localnet": "solana-test-validator --reset --quiet",
+    "logs": "solana logs"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.28.0",
+    "@solana/web3.js": "^1.87.6",
+    "@solana/spl-token": "^0.3.9"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.5",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.6",
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "MIT"
+}
