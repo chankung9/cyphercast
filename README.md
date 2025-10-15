@@ -519,6 +519,7 @@ pub struct Vault {
     pub token_mint: Pubkey,    // Type of SPL token (e.g., USDC, BONK)
     pub authority: Pubkey,     // PDA authority that signs transfers
     pub bump: u8,              // PDA bump seed
+    pub total_staked: u64,     // Total tokens staked in the vault (internal accounting)
 }
 ```
 
