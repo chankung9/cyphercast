@@ -20,7 +20,8 @@
 - `MAX_CHOICES = 10` - Validated across all prediction-related instructions
 - Anchor constraints prevent unauthorized claims (`has_one`, `constraint`)
 - Double-claim prevention with `reward_claimed` flag
-- Stream-prediction binding enforced at account validation levelg.shields.io/badge/Anchor-0.31.1-blue)](https://www.anchor-lang.com/)
+- Stream-prediction binding enforced at account validation level
+[![Anchor](https://img.shields.io/badge/Anchor-0.31.1-blue)](https://www.anchor-lang.com/)
 [![Phase](https://img.shields.io/badge/Phase-1%20MVP%20(80%25)-yellow)](#-current-status-phase-1-mvp-80-complete)
 
 ---
