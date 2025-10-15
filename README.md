@@ -4,8 +4,23 @@
 > Engage audiences with live predictions, token staking, and transparent rewards — powered by Anchor & PDAs.
 
 [![Solana](https://img.shields.io/badge/Solana-Localnet-green)](https://solana.com)
-[![Anchor](https://img.shields.io/badge/Anchor-0.31.1-blue)](https://www.anchor-lang.com/)
-[![Phase](<https://img.shields.io/badge/Phase-1%20MVP%20(60%25)-yellow>)](#-current-status-phase-1-mvp-60-complete)
+[![Anchor](h## 🧩 Key Anchor Instructions
+
+| Instruction            | Description                                                      | Status      |
+| ---------------------- | ---------------------------------------------------------------- | ----------- |
+| `create_stream()`      | Initializes a stream PDA linked to creator                       | ✅ Complete |
+| `join_stream()`        | Records viewer participation with stake                          | ✅ Complete |
+| `submit_prediction()`  | Submits user's predicted outcome & stake (max 10 choices)        | ✅ Complete |
+| `end_stream()`         | Creator marks stream as ended                                    | ✅ Complete |
+| `resolve_prediction()` | Oracle or creator finalizes result with winning choice           | ✅ Complete |
+| `claim_reward()`       | Winner claims reward (token transfer pending Phase 2 vault)      | ✅ Complete |
+
+**Security Features:**
+- `MAX_CHOICES = 10` - Validated across all prediction-related instructions
+- Anchor constraints prevent unauthorized claims (`has_one`, `constraint`)
+- Double-claim prevention with `reward_claimed` flag
+- Stream-prediction binding enforced at account validation levelg.shields.io/badge/Anchor-0.31.1-blue)](https://www.anchor-lang.com/)
+[![Phase](https://img.shields.io/badge/Phase-1%20MVP%20(80%25)-yellow)](#-current-status-phase-1-mvp-80-complete)
 
 ---
 
@@ -73,29 +88,32 @@ MIT License - see [LICENSE](./LICENSE) file for details
 
 - **GitHub**: [github.com/chankung9/cyphercast](https://github.com/chankung9/cyphercast)
 - **Program ID**: `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF` (Localnet)
-- **Status**: Phase 1 MVP - 60% Complete
+- **Status**: Phase 1 MVP - 80% Complete
 
 ---
 
-**⭐ Star this repo if you believe in the future of interactive Web3 streaming!**dge/Phase-1%20MVP-yellow)](https://github.com)
+**⭐ Star this repo if you believe in the future of interactive Web3 streaming!**
 
 ---
 
-## � Current Status: Phase 1 MVP (60% Complete)
+## 📊 Current Status: Phase 1 MVP (80% Complete)
 
 **✅ What's Working:**
 
 - Anchor program with PDA-based architecture
-- 5 core instructions: `create_stream`, `join_stream`, `submit_prediction`, `end_stream`, `claim_reward`
+- **6 core instructions**: `create_stream`, `join_stream`, `submit_prediction`, `end_stream`, `resolve_prediction`, `claim_reward`
+- **Stream resolution system** - Oracle/creator can finalize outcomes with `resolve_prediction`
+- **Reward claiming logic** - Winners can claim rewards after stream is resolved
+- **Security constraints** - Anchor validation prevents unauthorized claims and stream manipulation
+- **MAX_CHOICES constant** - Configurable prediction choices (default: 10)
 - Participant and prediction tracking on-chain
 - CLI demo tool for testing
 - Local deployment ready
 
 **🚧 In Development (Phase 2):**
 
-- Token Vault with PDA-based secure storage (see [Phase 2: Token Vault & Reward System](#-phase-2-token-vault--reward-system))
-- `resolve_prediction` instruction for outcome determination
-- Full reward distribution with SPL token transfers via CPI
+- Token Vault with PDA-based secure storage and Associated Token Accounts (ATA)
+- **Actual token transfers** - SPL token transfers via CPI (currently claim logic is complete, pending token integration)
 - Proportional payout calculation for winners
 - React frontend with wallet integration
 - Devnet deployment
@@ -401,6 +419,7 @@ For more CLI commands, see [docs/CLI-QUICK-REF.md](./docs/CLI-QUICK-REF.md)
 
    ```bash
    node cli/direct-cli.js predict <STREAM_PDA> 0 0.05
+   # Choice must be between 0-10 (MAX_CHOICES)
    ```
 
 4. **Creator** ends stream → `end_stream()`
@@ -409,19 +428,39 @@ For more CLI commands, see [docs/CLI-QUICK-REF.md](./docs/CLI-QUICK-REF.md)
    node cli/direct-cli.js end <STREAM_PDA>
    ```
 
-5. **Verification** - View on-chain data
+5. **Creator/Oracle** resolves stream → `resolve_prediction()` ✨ **NEW!**
+
+   ```bash
+   node cli/direct-cli.js resolve <STREAM_PDA> 0
+   # Sets winning_choice (0-10)
+   ```
+
+6. **Winner** claims reward → `claim_reward()` ✨ **IMPLEMENTED!**
+
+   ```bash
+   node cli/direct-cli.js claim <STREAM_PDA>
+   # Only works if prediction matches winning_choice
+   # Protected by Anchor constraints (has_one + constraint)
+   ```
+
+7. **Verification** - View on-chain data
    ```bash
    node cli/direct-cli.js fetch <STREAM_PDA>
    ```
 
 All transactions are recorded on Solana blockchain with **sub-second finality**.
 
-### Coming Soon (Phase 2):
+**Security Highlights:**
+- ✅ Stream must be resolved before claiming
+- ✅ Only correct predictions can claim rewards
+- ✅ Double-claim prevention with `reward_claimed` flag
+- ✅ Prediction-stream binding enforced via `constraint = prediction.stream == stream.key()`
+
+### Phase 2 Enhancements (In Progress):
 
 - **Token Vault System**: Secure PDA-based vault with Associated Token Accounts (ATA)
-- **Reward Distribution**: Proportional payouts to winners using SPL token CPI transfers
-- **Outcome Resolution**: `resolve_prediction` instruction for oracle/creator to finalize results
-- **Claim Mechanism**: Individual `claim_reward` calls for gas-efficient distribution
+- **Actual Token Transfers**: SPL token CPI transfers (claim logic ready, awaiting vault integration)
+- **Proportional Payouts**: Calculate fair distribution among multiple winners
 - **React Frontend**: Full wallet integration with Phantom/Solflare
 - **Devnet Deployment**: Public testnet deployment for community testing
 
@@ -431,12 +470,12 @@ For detailed architecture, see [Phase 2: Token Vault & Reward System](#-phase-2-
 
 ## 🧭 Roadmap
 
-| Phase                       | Goal                         | Key Deliverables                                                                                                                                          | Status           |
-| --------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| **Phase 1 – MVP (Current)** | Technical proof of concept   | ✅ Anchor program with PDA architecture<br/>✅ CLI testing tool<br/>✅ Core instructions (create, join, predict, end)<br/>⚠️ Basic reward framework       | **60% Complete** |
-| **Phase 2 – Reward System** | Complete reward distribution | 🚧 Token Vault with ATA<br/>🚧 resolve_prediction instruction<br/>🚧 SPL token transfers via CPI<br/>🚧 Winner calculation logic<br/>🚧 React frontend UI | **Planned**      |
-| **Phase 3 – Market Proof**  | Validate with real creators  | Beta site + social traction                                                                                                                               | **Q1 2026**      |
-| **Phase 4 – Ecosystem**     | DAO + Revenue split protocol | Governance + mobile-native UX                                                                                                                             | **Q2 2026**      |
+| Phase                       | Goal                         | Key Deliverables                                                                                                                                                                                           | Status           |
+| --------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| **Phase 1 – MVP (Current)** | Technical proof of concept   | ✅ Anchor program with PDA architecture<br/>✅ CLI testing tool<br/>✅ All core instructions (create, join, predict, end, resolve, claim)<br/>✅ Reward claiming logic<br/>✅ Security constraints          | **80% Complete** |
+| **Phase 2 – Reward System** | Complete reward distribution | 🚧 Token Vault with ATA<br/>🚧 SPL token transfers via CPI<br/>🚧 Proportional payout calculation<br/>🚧 React frontend UI<br/>🚧 Devnet deployment                                                        | **In Progress**  |
+| **Phase 3 – Market Proof**  | Validate with real creators  | Beta site + social traction                                                                                                                                                                                | **Q1 2026**      |
+| **Phase 4 – Ecosystem**     | DAO + Revenue split protocol | Governance + mobile-native UX                                                                                                                                                                              | **Q2 2026**      |
 
 ---
 
@@ -486,21 +525,26 @@ For detailed architecture, see [Phase 2: Token Vault & Reward System](#-phase-2-
    seeds = [b"vault", stream.key().as_ref()]
    ```
 
-### Security Features
+### Security Features (Phase 1 - Implemented)
 
 - ✅ **No Storage Overhead** - PDAs are derived, not stored
 - ✅ **Ownership Verification** - Only program can modify accounts
 - ✅ **Deterministic** - Same inputs always generate same addresses
 - ✅ **Signer Validation** - Anchor framework checks all permissions
+- ✅ **Constraint-based Security** - `has_one` and `constraint` macros prevent unauthorized access
+- ✅ **Stream-Prediction Binding** - Enforces `prediction.stream == stream.key()` at validation level
+- ✅ **Double-claim Prevention** - `reward_claimed` flag with strict validation
 - ✅ **On-chain Audit Trail** - All transactions publicly verifiable
+- ✅ **MAX_CHOICES Validation** - Consistent validation across all prediction instructions
 
-### Phase 2 Security Enhancements
+### Phase 2 Security Enhancements (Planned)
 
 - 🚧 Token vault for stake management with Associated Token Accounts (ATA)
-- 🚧 Duplicate claim prevention with `reward_claimed` flag
+- 🚧 SPL token CPI transfers with proper authority validation
 - 🚧 Multi-signature for critical operations
 - 🚧 Time-locks for dispute resolution
-- 🚧 Smart contract audit
+- 🚧 Smart contract audit by third party
+- 🚧 Proportional payout overflow protection
 
 ---
 
@@ -565,7 +609,7 @@ stateDiagram-v2
     Claimed --> [*]
 ```
 
-**Stream Account Fields (Phase 2):**
+**Stream Account Fields (Implemented):**
 
 ```rust
 pub struct Stream {
@@ -576,6 +620,22 @@ pub struct Stream {
     pub end_time: i64,
     pub total_stake: u64,
     pub is_active: bool,
+    pub is_resolved: bool,      // ✅ Phase 1 - Track resolution status
+    pub winning_choice: u8,     // ✅ Phase 1 - Store winning choice (0-10)
+    pub bump: u8,
+}
+```
+
+**Prediction Account Fields:**
+
+```rust
+pub struct Prediction {
+    pub stream: Pubkey,
+    pub viewer: Pubkey,
+    pub choice: u8,             // Prediction choice (0-10, validated against MAX_CHOICES)
+    pub stake_amount: u64,
+    pub timestamp: i64,
+    pub reward_claimed: bool,   // ✅ Prevents double-claiming
     pub bump: u8,
 }
 ```
@@ -664,18 +724,40 @@ programs/
 - **Validate signers** and ownership on every instruction
 - **Prevent duplicate claims** with `reward_claimed: bool` flag
 - Use **`has_one =`** Anchor constraints to enforce account linkage
+- **Constraint validation** - Enforce `prediction.stream == stream.key()` to prevent cross-stream exploits
+- **MAX_CHOICES constant** - Centralized validation (currently set to 10)
 - **Overflow protection** for token calculations
 - **Time-locks** for dispute resolution windows
 
+### Error Codes (Implemented)
+
+```rust
+pub enum CypherCastError {
+    StreamNotActive,        // Stream must be active for predictions
+    StreamStillActive,      // Stream must be ended before resolution
+    InvalidStakeAmount,     // Stake must be > 0
+    InvalidChoice,          // Choice must be <= MAX_CHOICES
+    Unauthorized,           // Only creator can end/resolve stream
+    RewardAlreadyClaimed,   // Prevents double-claiming
+    NotResolved,            // Stream must be resolved before claiming
+    NotWinner,              // Prediction must match winning_choice
+    AlreadyResolved,        // Stream can only be resolved once
+}
+```
+
 ### Phase 2 Implementation Roadmap
 
-- [ ] Implement `resolve_prediction` instruction
-- [ ] Implement `claim_reward` instruction with token transfers
-- [ ] Integrate Vault ATA in `join_stream`
+- [x] ~~Implement `resolve_prediction` instruction~~ ✅ **COMPLETE**
+- [x] ~~Implement `claim_reward` instruction~~ ✅ **COMPLETE** (token transfers pending vault)
+- [ ] Implement Token Vault PDA and Associated Token Account (ATA)
+- [ ] Integrate Vault ATA in `join_stream` for actual token deposits
+- [ ] Add SPL token CPI transfers in `claim_reward`
+- [ ] Implement proportional payout calculation
 - [ ] Add unit tests for edge cases:
-  - Wrong predictions
-  - Double claim attempts
+  - Wrong predictions ✅ (validated via `NotWinner` error)
+  - Double claim attempts ✅ (prevented by `reward_claimed` flag)
   - Vault underflow scenarios
+  - Cross-stream claim attempts ✅ (prevented by constraint)
 - [ ] Deploy to devnet
 - [ ] Connect with React frontend
 
