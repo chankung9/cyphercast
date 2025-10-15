@@ -569,14 +569,14 @@ stateDiagram-v2
 
 ```rust
 pub struct Stream {
-    pub id: u64,
     pub creator: Pubkey,
-    pub is_active: bool,
-    pub is_resolved: bool,
-    pub winning_choice: Option<u8>,
+    pub stream_id: u64,
+    pub title: String,
+    pub start_time: i64,
     pub end_time: i64,
-    pub total_pool: u64,
-    // ... other fields
+    pub total_stake: u64,
+    pub is_active: bool,
+    pub bump: u8,
 }
 ```
 
