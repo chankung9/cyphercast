@@ -20,6 +20,8 @@ pub mod cyphercast {
         stream.end_time = 0;
         stream.total_stake = 0;
         stream.is_active = true;
+        stream.is_resolved = false;
+        stream.winning_choice = 0;
         stream.bump = ctx.bumps.stream;
 
         msg!("Stream created: {} by {}", title, stream.creator);
@@ -60,7 +62,7 @@ pub mod cyphercast {
 
         require!(stream.is_active, CypherCastError::StreamNotActive);
         require!(stake_amount > 0, CypherCastError::InvalidStakeAmount);
-        require!(choice <= 10, CypherCastError::InvalidChoice); // Max 10 choices
+        require!(choice <= 10, CypherCastError::InvalidChoice);
 
         prediction.stream = stream.key();
         prediction.viewer = *ctx.accounts.viewer.key;
@@ -95,9 +97,37 @@ pub mod cyphercast {
         Ok(())
     }
 
+    pub fn resolve_prediction(ctx: Context<ResolvePrediction>, winning_choice: u8) -> Result<()> {
+        let stream = &mut ctx.accounts.stream;
+
+        require!(!stream.is_active, CypherCastError::StreamNotActive);
+        require!(!stream.is_resolved, CypherCastError::AlreadyResolved);
+        require!(winning_choice <= 10, CypherCastError::InvalidChoice);
+        require!(
+            stream.creator == *ctx.accounts.creator.key,
+            CypherCastError::Unauthorized
+        );
+
+        stream.is_resolved = true;
+        stream.winning_choice = winning_choice;
+
+        msg!(
+            "Stream {} resolved with winning choice {}",
+            stream.stream_id,
+            winning_choice
+        );
+        Ok(())
+    }
+
     pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
         let prediction = &mut ctx.accounts.prediction;
+        let stream = &ctx.accounts.stream;
 
+        require!(stream.is_resolved, CypherCastError::NotResolved);
+        require!(
+            prediction.choice == stream.winning_choice,
+            CypherCastError::NotWinner
+        );
         require!(
             !prediction.reward_claimed,
             CypherCastError::RewardAlreadyClaimed
@@ -176,9 +206,19 @@ pub struct EndStream<'info> {
 }
 
 #[derive(Accounts)]
+pub struct ResolvePrediction<'info> {
+    #[account(mut)]
+    pub stream: Account<'info, Stream>,
+
+    pub creator: Signer<'info>,
+}
+
+#[derive(Accounts)]
 pub struct ClaimReward<'info> {
     #[account(mut)]
     pub prediction: Account<'info, Prediction>,
+
+    pub stream: Account<'info, Stream>,
 
     pub viewer: Signer<'info>,
 }
@@ -192,6 +232,8 @@ pub struct Stream {
     pub end_time: i64,
     pub total_stake: u64,
     pub is_active: bool,
+    pub is_resolved: bool,
+    pub winning_choice: u8,
     pub bump: u8,
 }
 
@@ -204,6 +246,8 @@ impl Stream {
         8 + // end_time
         8 + // total_stake
         1 + // is_active
+        1 + // is_resolved
+        1 + // winning_choice (u8)
         1; // bump
 }
 
@@ -259,4 +303,10 @@ pub enum CypherCastError {
     Unauthorized,
     #[msg("Reward already claimed")]
     RewardAlreadyClaimed,
+    #[msg("Stream not resolved")]
+    NotResolved,
+    #[msg("Incorrect prediction")]
+    NotWinner,
+    #[msg("Stream already resolved")]
+    AlreadyResolved,
 }
