@@ -6,6 +6,9 @@ declare_id!("5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF");
 pub mod cyphercast {
     use super::*;
 
+    /// Maximum number of prediction choices supported by the program.
+    pub const MAX_CHOICES: u8 = 10;
+
     pub fn create_stream(
         ctx: Context<CreateStream>,
         stream_id: u64,
@@ -62,7 +65,7 @@ pub mod cyphercast {
 
         require!(stream.is_active, CypherCastError::StreamNotActive);
         require!(stake_amount > 0, CypherCastError::InvalidStakeAmount);
-        require!(choice <= 10, CypherCastError::InvalidChoice);
+        require!(choice <= MAX_CHOICES, CypherCastError::InvalidChoice);
 
         prediction.stream = stream.key();
         prediction.viewer = *ctx.accounts.viewer.key;
@@ -100,9 +103,22 @@ pub mod cyphercast {
     pub fn resolve_prediction(ctx: Context<ResolvePrediction>, winning_choice: u8) -> Result<()> {
         let stream = &mut ctx.accounts.stream;
 
-        require!(!stream.is_active, CypherCastError::StreamNotActive);
-        require!(!stream.is_resolved, CypherCastError::AlreadyResolved);
-        require!(winning_choice <= 10, CypherCastError::InvalidChoice);
+        // The stream must be inactive before resolving predictions.
+        require!(
+            !stream.is_active,
+            CypherCastError::StreamStillActive
+        );
+        // The stream cannot be resolved more than once.
+        require!(
+            !stream.is_resolved,
+            CypherCastError::AlreadyResolved
+        );
+        // Validate the winning choice against the maximum allowed choices.
+        require!(
+            winning_choice <= MAX_CHOICES,
+            CypherCastError::InvalidChoice
+        );
+        // Only the creator of the stream can resolve the prediction.
         require!(
             stream.creator == *ctx.accounts.creator.key,
             CypherCastError::Unauthorized
@@ -123,11 +139,14 @@ pub mod cyphercast {
         let prediction = &mut ctx.accounts.prediction;
         let stream = &ctx.accounts.stream;
 
+        // Ensure the stream has been resolved.
         require!(stream.is_resolved, CypherCastError::NotResolved);
+        // Only predictions that match the winning choice can claim rewards.
         require!(
             prediction.choice == stream.winning_choice,
             CypherCastError::NotWinner
         );
+        // Prevent double-claiming of rewards.
         require!(
             !prediction.reward_claimed,
             CypherCastError::RewardAlreadyClaimed
@@ -215,11 +234,22 @@ pub struct ResolvePrediction<'info> {
 
 #[derive(Accounts)]
 pub struct ClaimReward<'info> {
-    #[account(mut)]
+    /// Prediction account being claimed. Enforce that the prediction belongs to
+    /// the supplied stream and viewer via Anchor constraints.
+    #[account(
+        mut,
+        // ensure the prediction's viewer matches the signer
+        has_one = viewer,
+        // ensure the prediction's stream matches the provided stream account
+        constraint = prediction.stream == stream.key()
+    )]
     pub prediction: Account<'info, Prediction>,
 
+    /// The stream that has been resolved. Must match `prediction.stream`.
+    #[account(mut)]
     pub stream: Account<'info, Stream>,
 
+    /// The viewer (caller) claiming the reward. Must match `prediction.viewer`.
     pub viewer: Signer<'info>,
 }
 
@@ -295,6 +325,8 @@ impl Prediction {
 pub enum CypherCastError {
     #[msg("Stream is not active")]
     StreamNotActive,
+    #[msg("Stream is still active")]
+    StreamStillActive,
     #[msg("Invalid stake amount")]
     InvalidStakeAmount,
     #[msg("Invalid choice")]
