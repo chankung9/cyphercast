@@ -4,7 +4,8 @@
 > Engage audiences with live predictions, token staking, and transparent rewards — powered by Anchor & PDAs.
 
 [![Solana](https://img.shields.io/badge/Solana-Localnet-green)](https://solana.com)
-[![Anchor](h## 🧩 Key Anchor Instructions
+[![Anchor](https://img.shields.io/badge/Anchor-0.31.1-blue)](https://www.anchor-lang.com/)
+## 🧩 Key Anchor Instructions
 
 | Instruction            | Description                                                      | Status      |
 | ---------------------- | ---------------------------------------------------------------- | ----------- |
