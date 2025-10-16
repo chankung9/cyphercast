@@ -1,4 +1,6 @@
 use anchor_lang::prelude::*;
+use anchor_spl::associated_token::AssociatedToken;
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 declare_id!("5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF");
 
@@ -8,6 +10,29 @@ pub mod cyphercast {
 
     /// Maximum number of prediction choices supported by the program.
     pub const MAX_CHOICES: u8 = 10;
+
+    /// Initialize a token vault for a stream to hold staked SPL tokens
+    pub fn initialize_token_vault(ctx: Context<InitializeTokenVault>) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        let stream = &ctx.accounts.stream;
+
+        // Only the stream creator can initialize the vault
+        require!(
+            stream.creator == *ctx.accounts.creator.key,
+            CypherCastError::Unauthorized
+        );
+
+        vault.stream = stream.key();
+        vault.token_account = ctx.accounts.vault_token_account.key();
+        vault.bump = ctx.bumps.vault;
+
+        msg!(
+            "Token vault initialized for stream {} with token account {}",
+            stream.stream_id,
+            vault.token_account
+        );
+        Ok(())
+    }
 
     pub fn create_stream(
         ctx: Context<CreateStream>,
@@ -38,6 +63,17 @@ pub mod cyphercast {
         require!(stream.is_active, CypherCastError::StreamNotActive);
         require!(stake_amount > 0, CypherCastError::InvalidStakeAmount);
 
+        // Transfer SPL tokens from viewer's ATA to vault ATA
+        let cpi_ctx = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.viewer_token_account.to_account_info(),
+                to: ctx.accounts.vault_token_account.to_account_info(),
+                authority: ctx.accounts.viewer.to_account_info(),
+            },
+        );
+        token::transfer(cpi_ctx, stake_amount)?;
+
         stream.total_stake = stream.total_stake.checked_add(stake_amount).unwrap();
 
         participant.stream = stream.key();
@@ -47,7 +83,7 @@ pub mod cyphercast {
         participant.bump = ctx.bumps.participant;
 
         msg!(
-            "User {} joined stream {} with stake {}",
+            "User {} joined stream {} with stake {} tokens",
             participant.viewer,
             stream.stream_id,
             stake_amount
@@ -67,6 +103,17 @@ pub mod cyphercast {
         require!(stake_amount > 0, CypherCastError::InvalidStakeAmount);
         require!(choice <= MAX_CHOICES, CypherCastError::InvalidChoice);
 
+        // Transfer SPL tokens from viewer's ATA to vault ATA for prediction stake
+        let cpi_ctx = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.viewer_token_account.to_account_info(),
+                to: ctx.accounts.vault_token_account.to_account_info(),
+                authority: ctx.accounts.viewer.to_account_info(),
+            },
+        );
+        token::transfer(cpi_ctx, stake_amount)?;
+
         prediction.stream = stream.key();
         prediction.viewer = *ctx.accounts.viewer.key;
         prediction.choice = choice;
@@ -76,7 +123,7 @@ pub mod cyphercast {
         prediction.bump = ctx.bumps.prediction;
 
         msg!(
-            "Prediction submitted: choice {} with stake {} by {}",
+            "Prediction submitted: choice {} with stake {} tokens by {}",
             choice,
             stake_amount,
             prediction.viewer
@@ -104,15 +151,9 @@ pub mod cyphercast {
         let stream = &mut ctx.accounts.stream;
 
         // The stream must be inactive before resolving predictions.
-        require!(
-            !stream.is_active,
-            CypherCastError::StreamStillActive
-        );
+        require!(!stream.is_active, CypherCastError::StreamStillActive);
         // The stream cannot be resolved more than once.
-        require!(
-            !stream.is_resolved,
-            CypherCastError::AlreadyResolved
-        );
+        require!(!stream.is_resolved, CypherCastError::AlreadyResolved);
         // Validate the winning choice against the maximum allowed choices.
         require!(
             winning_choice <= MAX_CHOICES,
@@ -138,6 +179,7 @@ pub mod cyphercast {
     pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
         let prediction = &mut ctx.accounts.prediction;
         let stream = &ctx.accounts.stream;
+        let vault = &ctx.accounts.vault;
 
         // Ensure the stream has been resolved.
         require!(stream.is_resolved, CypherCastError::NotResolved);
@@ -152,9 +194,32 @@ pub mod cyphercast {
             CypherCastError::RewardAlreadyClaimed
         );
 
+        // Calculate reward amount (simple equal distribution for MVP)
+        // In production, this would be proportional based on total stakes
+        let reward_amount = prediction.stake_amount * 2; // 2x return for winners (simplified)
+
+        // Transfer tokens from vault to winner using PDA signer
+        let stream_key = stream.key();
+        let signer_seeds: &[&[&[u8]]] = &[&[b"vault", stream_key.as_ref(), &[vault.bump]]];
+
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.vault_token_account.to_account_info(),
+                to: ctx.accounts.viewer_token_account.to_account_info(),
+                authority: ctx.accounts.vault.to_account_info(),
+            },
+            signer_seeds,
+        );
+        token::transfer(cpi_ctx, reward_amount)?;
+
         prediction.reward_claimed = true;
 
-        msg!("Reward claimed for prediction by {}", prediction.viewer);
+        msg!(
+            "Reward of {} tokens claimed by {}",
+            reward_amount,
+            prediction.viewer
+        );
         Ok(())
     }
 }
@@ -178,6 +243,42 @@ pub struct CreateStream<'info> {
 }
 
 #[derive(Accounts)]
+pub struct InitializeTokenVault<'info> {
+    #[account(mut)]
+    pub creator: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"stream", creator.key().as_ref(), stream.stream_id.to_le_bytes().as_ref()],
+        bump = stream.bump,
+    )]
+    pub stream: Account<'info, Stream>,
+
+    #[account(
+        init,
+        seeds = [b"vault", stream.key().as_ref()],
+        bump,
+        payer = creator,
+        space = TokenVault::SPACE,
+    )]
+    pub vault: Account<'info, TokenVault>,
+
+    pub token_mint: Account<'info, Mint>,
+
+    #[account(
+        init,
+        payer = creator,
+        associated_token::mint = token_mint,
+        associated_token::authority = vault,
+    )]
+    pub vault_token_account: Account<'info, TokenAccount>,
+
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
 pub struct JoinStream<'info> {
     #[account(mut)]
     pub stream: Account<'info, Stream>,
@@ -191,9 +292,25 @@ pub struct JoinStream<'info> {
     )]
     pub participant: Account<'info, Participant>,
 
+    #[account(
+        seeds = [b"vault", stream.key().as_ref()],
+        bump = vault.bump,
+    )]
+    pub vault: Account<'info, TokenVault>,
+
+    #[account(mut)]
+    pub viewer_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        constraint = vault_token_account.key() == vault.token_account
+    )]
+    pub vault_token_account: Account<'info, TokenAccount>,
+
     #[account(mut)]
     pub viewer: Signer<'info>,
 
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -210,9 +327,25 @@ pub struct SubmitPrediction<'info> {
     )]
     pub prediction: Account<'info, Prediction>,
 
+    #[account(
+        seeds = [b"vault", stream.key().as_ref()],
+        bump = vault.bump,
+    )]
+    pub vault: Account<'info, TokenVault>,
+
+    #[account(mut)]
+    pub viewer_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        constraint = vault_token_account.key() == vault.token_account
+    )]
+    pub vault_token_account: Account<'info, TokenAccount>,
+
     #[account(mut)]
     pub viewer: Signer<'info>,
 
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -249,8 +382,25 @@ pub struct ClaimReward<'info> {
     #[account(mut)]
     pub stream: Account<'info, Stream>,
 
+    #[account(
+        seeds = [b"vault", stream.key().as_ref()],
+        bump = vault.bump,
+    )]
+    pub vault: Account<'info, TokenVault>,
+
+    #[account(mut)]
+    pub viewer_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        constraint = vault_token_account.key() == vault.token_account
+    )]
+    pub vault_token_account: Account<'info, TokenAccount>,
+
     /// The viewer (caller) claiming the reward. Must match `prediction.viewer`.
     pub viewer: Signer<'info>,
+
+    pub token_program: Program<'info, Token>,
 }
 
 #[account]
@@ -318,6 +468,20 @@ impl Prediction {
         8 + // stake_amount
         8 + // timestamp
         1 + // reward_claimed
+        1; // bump
+}
+
+#[account]
+pub struct TokenVault {
+    pub stream: Pubkey,
+    pub token_account: Pubkey,
+    pub bump: u8,
+}
+
+impl TokenVault {
+    pub const SPACE: usize = 8 + // discriminator
+        32 + // stream
+        32 + // token_account
         1; // bump
 }
 

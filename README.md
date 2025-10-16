@@ -3,26 +3,41 @@
 > **On-chain Interactive Streaming Layer built on Solana.**  
 > Engage audiences with live predictions, token staking, and transparent rewards — powered by Anchor & PDAs.
 
+> 🎉 **Phase 2 Complete!** - Full SPL token integration with TokenVault, staking, and reward distribution  
+> 📚 [**View Phase 2 Documentation →**](./docs/PHASE2-INDEX.md)
+
 [![Solana](https://img.shields.io/badge/Solana-Localnet-green)](https://solana.com)
 [![Anchor](https://img.shields.io/badge/Anchor-0.31.1-blue)](https://www.anchor-lang.com/)
+[![SPL Token](https://img.shields.io/badge/SPL%20Token-Integrated-success)](https://spl.solana.com/token)
+[![Phase 2](https://img.shields.io/badge/Phase%202-Complete-brightgreen)](./docs/PHASE2-INDEX.md)
+[![Tests](https://img.shields.io/badge/Tests-8%20passing-success)](./tests/phase2-token-vault.ts)
+[![License](https://img.shields.io/badge/License-MIT-blue)](./LICENSE)
 ## 🧩 Key Anchor Instructions
 
-| Instruction            | Description                                                      | Status      |
-| ---------------------- | ---------------------------------------------------------------- | ----------- |
-| `create_stream()`      | Initializes a stream PDA linked to creator                       | ✅ Complete |
-| `join_stream()`        | Records viewer participation with stake                          | ✅ Complete |
-| `submit_prediction()`  | Submits user's predicted outcome & stake (max 10 choices)        | ✅ Complete |
-| `end_stream()`         | Creator marks stream as ended                                    | ✅ Complete |
-| `resolve_prediction()` | Oracle or creator finalizes result with winning choice           | ✅ Complete |
-| `claim_reward()`       | Winner claims reward (token transfer pending Phase 2 vault)      | ✅ Complete |
+| Instruction                | Description                                                          | Phase | Status      |
+| -------------------------- | -------------------------------------------------------------------- | ----- | ----------- |
+| `create_stream()`          | Initializes a stream PDA linked to creator                           | 1     | ✅ Complete |
+| `initialize_token_vault()` | Creates TokenVault PDA and associated token account for stream       | 2     | ✅ Complete |
+| `join_stream()`            | Transfers SPL tokens from viewer to vault as participation stake     | 2     | ✅ Complete |
+| `submit_prediction()`      | Submits prediction with SPL token stake (max 10 choices)             | 2     | ✅ Complete |
+| `end_stream()`             | Creator marks stream as ended                                        | 1     | ✅ Complete |
+| `resolve_prediction()`     | Oracle or creator finalizes result with winning choice               | 1     | ✅ Complete |
+| `claim_reward()`           | Winner claims SPL token rewards from vault (PDA-signed transfer)     | 2     | ✅ Complete |
+
+**✨ Phase 2 Features:**
+- 🪙 Full SPL token integration with CPI transfers
+- 🔐 Secure TokenVault PDA for holding staked tokens
+- 💰 Actual reward distribution (2x multiplier for MVP)
+- ✅ Complete test coverage (8 test cases)
+- 📚 [**View Phase 2 Documentation →**](./docs/PHASE2-INDEX.md)
 
 **Security Features:**
 - `MAX_CHOICES = 10` - Validated across all prediction-related instructions
 - Anchor constraints prevent unauthorized claims (`has_one`, `constraint`)
 - Double-claim prevention with `reward_claimed` flag
 - Stream-prediction binding enforced at account validation level
-[![Anchor](https://img.shields.io/badge/Anchor-0.31.1-blue)](https://www.anchor-lang.com/)
-[![Phase](https://img.shields.io/badge/Phase-1%20MVP%20(80%25)-yellow)](#-current-status-phase-1-mvp-80-complete)
+- PDA signing for secure token transfers from vault
+- Winner-only reward access validation
 
 ---
 
@@ -37,20 +52,33 @@
 
 ## 📚 Documentation
 
-- [CLI Quick Reference](./docs/CLI-QUICK-REF.md) - Command-line tool usage
+### 🎯 Getting Started
 - [Local Setup Guide](./LOCAL_SETUP.md) - Development environment setup
-- [Anchor Program](./programs/cyphercast/src/lib.rs) - Smart contract source code
+- [CLI Quick Reference](./docs/CLI-QUICK-REF.md) - Command-line tool usage
+
+### 🆕 Phase 2: Token Vault & Reward Distribution
+- **[📍 Phase 2 Index](./docs/PHASE2-INDEX.md)** - **START HERE** - Complete documentation hub
+- [Phase 2 Summary](./docs/PHASE2-SUMMARY.md) - Quick overview and statistics
+- [Phase 2 Quick Reference](./docs/PHASE2-QUICK-REF.md) - Developer usage guide
+- [Phase 2 Implementation](./docs/PHASE2-IMPLEMENTATION.md) - Technical details
+- [Phase 2 Complete](./docs/PHASE2-COMPLETE.md) - Achievements summary
+- [Phase 2 Verification](./docs/PHASE2-VERIFICATION.md) - Testing checklist
+
+### 📝 Source Code
+- [Anchor Program](./programs/cyphercast/src/lib.rs) - Smart contract source
+- [Phase 2 Tests](./tests/phase2-token-vault.ts) - Token vault test suite
 
 ---
 
 ## 🤝 Contributing
 
-This is a hackathon project currently in Phase 1 MVP. We welcome:
+This is a hackathon project with Phase 1 & 2 complete. We welcome:
 
 - 🐛 Bug reports and feedback
-- 💡 Feature suggestions for Phase 2
-- 🔧 Pull requests (especially for reward distribution!)
+- 💡 Feature suggestions for Phase 3 (frontend, devnet deployment)
+- 🔧 Pull requests (especially for UI/UX and proportional rewards!)
 - 📖 Documentation improvements
+- 🧪 Testing and integration help
 
 ### Development Workflow
 
@@ -90,7 +118,8 @@ MIT License - see [LICENSE](./LICENSE) file for details
 
 - **GitHub**: [github.com/chankung9/cyphercast](https://github.com/chankung9/cyphercast)
 - **Program ID**: `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF` (Localnet)
-- **Status**: Phase 1 MVP - 80% Complete
+- **Status**: Phase 2 Complete ✅ - Token Vault & Rewards
+- **Documentation**: [Phase 2 Docs](./docs/PHASE2-INDEX.md)
 
 ---
 
@@ -98,27 +127,38 @@ MIT License - see [LICENSE](./LICENSE) file for details
 
 ---
 
-## 📊 Current Status: Phase 1 MVP (80% Complete)
+## 📊 Current Status: Phase 2 Complete! 🎉
 
-**✅ What's Working:**
+### ✅ Phase 1 & 2 - Fully Implemented
 
+**Core Program Features (Phase 1):**
 - Anchor program with PDA-based architecture
-- **6 core instructions**: `create_stream`, `join_stream`, `submit_prediction`, `end_stream`, `resolve_prediction`, `claim_reward`
-- **Stream resolution system** - Oracle/creator can finalize outcomes with `resolve_prediction`
-- **Reward claiming logic** - Winners can claim rewards after stream is resolved
-- **Security constraints** - Anchor validation prevents unauthorized claims and stream manipulation
+- **7 core instructions** including stream management and predictions
+- **Stream resolution system** - Oracle/creator finalizes outcomes
+- **Security constraints** - Anchor validation prevents unauthorized access
 - **MAX_CHOICES constant** - Configurable prediction choices (default: 10)
 - Participant and prediction tracking on-chain
 - CLI demo tool for testing
 - Local deployment ready
 
-**🚧 In Development (Phase 2):**
+**Token Vault & Rewards (Phase 2 ✅):**
+- ✅ **TokenVault PDA** - Secure on-chain vault for SPL tokens
+- ✅ **Token Staking** - Users stake SPL tokens when joining/predicting
+- ✅ **Reward Distribution** - Winners receive tokens via PDA-signed transfers
+- ✅ **SPL Token Integration** - Complete CPI implementation
+- ✅ **Security Features** - Double-claim prevention, winner validation
+- ✅ **Comprehensive Tests** - 8 test cases covering all scenarios
+- ✅ **Full Documentation** - 6 detailed guides and references
 
-- Token Vault with PDA-based secure storage and Associated Token Accounts (ATA)
-- **Actual token transfers** - SPL token transfers via CPI (currently claim logic is complete, pending token integration)
-- Proportional payout calculation for winners
-- React frontend with wallet integration
-- Devnet deployment
+**📚 [Read Complete Phase 2 Documentation →](./docs/PHASE2-INDEX.md)**
+
+### 🚧 Phase 3 - Coming Next
+
+- React frontend with wallet integration (Phantom/Solflare)
+- Proportional payout calculation for multiple winners
+- Devnet deployment and public testing
+- Live streaming integration (YouTube/Twitch)
+- Platform fee mechanism
 
 **Program ID (Localnet):** `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF`
 
