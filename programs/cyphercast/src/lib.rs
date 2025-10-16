@@ -10,6 +10,9 @@ pub mod cyphercast {
 
     /// Maximum number of prediction choices supported by the program.
     pub const MAX_CHOICES: u8 = 10;
+    
+    /// Size of the discriminator added by Anchor to all accounts
+    pub const DISCRIMINATOR: usize = 8;
 
     /// Initialize a token vault for a stream to hold staked SPL tokens
     pub fn initialize_token_vault(ctx: Context<InitializeTokenVault>) -> Result<()> {
@@ -25,6 +28,8 @@ pub mod cyphercast {
         vault.stream = stream.key();
         vault.token_account = ctx.accounts.vault_token_account.key();
         vault.bump = ctx.bumps.vault;
+        vault.total_deposited = 0;
+        vault.total_released = 0;
 
         msg!(
             "Token vault initialized for stream {} with token account {}",
@@ -59,6 +64,7 @@ pub mod cyphercast {
     pub fn join_stream(ctx: Context<JoinStream>, stake_amount: u64) -> Result<()> {
         let stream = &mut ctx.accounts.stream;
         let participant = &mut ctx.accounts.participant;
+        let vault = &mut ctx.accounts.vault;
 
         require!(stream.is_active, CypherCastError::StreamNotActive);
         require!(stake_amount > 0, CypherCastError::InvalidStakeAmount);
@@ -74,7 +80,8 @@ pub mod cyphercast {
         );
         token::transfer(cpi_ctx, stake_amount)?;
 
-        stream.total_stake = stream.total_stake.checked_add(stake_amount).unwrap();
+        stream.total_stake = stream.total_stake.checked_add(stake_amount).ok_or(CypherCastError::Overflow)?;
+        vault.total_deposited = vault.total_deposited.checked_add(stake_amount).ok_or(CypherCastError::Overflow)?;
 
         participant.stream = stream.key();
         participant.viewer = *ctx.accounts.viewer.key;
@@ -98,6 +105,7 @@ pub mod cyphercast {
     ) -> Result<()> {
         let prediction = &mut ctx.accounts.prediction;
         let stream = &ctx.accounts.stream;
+        let vault = &mut ctx.accounts.vault;
 
         require!(stream.is_active, CypherCastError::StreamNotActive);
         require!(stake_amount > 0, CypherCastError::InvalidStakeAmount);
@@ -113,6 +121,8 @@ pub mod cyphercast {
             },
         );
         token::transfer(cpi_ctx, stake_amount)?;
+
+        vault.total_deposited = vault.total_deposited.checked_add(stake_amount).ok_or(CypherCastError::Overflow)?;
 
         prediction.stream = stream.key();
         prediction.viewer = *ctx.accounts.viewer.key;
@@ -179,7 +189,6 @@ pub mod cyphercast {
     pub fn claim_reward(ctx: Context<ClaimReward>) -> Result<()> {
         let prediction = &mut ctx.accounts.prediction;
         let stream = &ctx.accounts.stream;
-        let vault = &ctx.accounts.vault;
 
         // Ensure the stream has been resolved.
         require!(stream.is_resolved, CypherCastError::NotResolved);
@@ -200,7 +209,8 @@ pub mod cyphercast {
 
         // Transfer tokens from vault to winner using PDA signer
         let stream_key = stream.key();
-        let signer_seeds: &[&[&[u8]]] = &[&[b"vault", stream_key.as_ref(), &[vault.bump]]];
+        let vault_bump = ctx.accounts.vault.bump;
+        let signer_seeds: &[&[&[u8]]] = &[&[b"vault", stream_key.as_ref(), &[vault_bump]]];
 
         let cpi_ctx = CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
@@ -213,6 +223,11 @@ pub mod cyphercast {
         );
         token::transfer(cpi_ctx, reward_amount)?;
 
+        // Update vault tracking
+        ctx.accounts.vault.total_released = ctx.accounts.vault.total_released
+            .checked_add(reward_amount)
+            .ok_or(CypherCastError::Overflow)?;
+        
         prediction.reward_claimed = true;
 
         msg!(
@@ -293,6 +308,7 @@ pub struct JoinStream<'info> {
     pub participant: Account<'info, Participant>,
 
     #[account(
+        mut,
         seeds = [b"vault", stream.key().as_ref()],
         bump = vault.bump,
     )]
@@ -328,6 +344,7 @@ pub struct SubmitPrediction<'info> {
     pub prediction: Account<'info, Prediction>,
 
     #[account(
+        mut,
         seeds = [b"vault", stream.key().as_ref()],
         bump = vault.bump,
     )]
@@ -383,6 +400,7 @@ pub struct ClaimReward<'info> {
     pub stream: Account<'info, Stream>,
 
     #[account(
+        mut,
         seeds = [b"vault", stream.key().as_ref()],
         bump = vault.bump,
     )]
@@ -418,7 +436,7 @@ pub struct Stream {
 }
 
 impl Stream {
-    pub const SPACE: usize = 8 + // discriminator
+    pub const SPACE: usize = DISCRIMINATOR +
         32 + // creator
         8 + // stream_id
         4 + 200 + // title (max 200 chars)
@@ -441,7 +459,7 @@ pub struct Participant {
 }
 
 impl Participant {
-    pub const SPACE: usize = 8 + // discriminator
+    pub const SPACE: usize = DISCRIMINATOR +
         32 + // stream
         32 + // viewer
         8 + // stake_amount
@@ -461,7 +479,7 @@ pub struct Prediction {
 }
 
 impl Prediction {
-    pub const SPACE: usize = 8 + // discriminator
+    pub const SPACE: usize = DISCRIMINATOR +
         32 + // stream
         32 + // viewer
         1 + // choice
@@ -476,13 +494,17 @@ pub struct TokenVault {
     pub stream: Pubkey,
     pub token_account: Pubkey,
     pub bump: u8,
+    pub total_deposited: u64,
+    pub total_released: u64,
 }
 
 impl TokenVault {
-    pub const SPACE: usize = 8 + // discriminator
+    pub const SPACE: usize = DISCRIMINATOR +
         32 + // stream
         32 + // token_account
-        1; // bump
+        1 + // bump
+        8 + // total_deposited
+        8; // total_released
 }
 
 #[error_code]
@@ -505,4 +527,6 @@ pub enum CypherCastError {
     NotWinner,
     #[msg("Stream already resolved")]
     AlreadyResolved,
+    #[msg("Math overflow")]
+    Overflow,
 }

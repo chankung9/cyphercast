@@ -12,19 +12,21 @@
 [![Phase 2](https://img.shields.io/badge/Phase%202-Complete-brightgreen)](./docs/PHASE2-INDEX.md)
 [![Tests](https://img.shields.io/badge/Tests-8%20passing-success)](./tests/phase2-token-vault.ts)
 [![License](https://img.shields.io/badge/License-MIT-blue)](./LICENSE)
+
 ## 🧩 Key Anchor Instructions
 
-| Instruction                | Description                                                          | Phase | Status      |
-| -------------------------- | -------------------------------------------------------------------- | ----- | ----------- |
-| `create_stream()`          | Initializes a stream PDA linked to creator                           | 1     | ✅ Complete |
-| `initialize_token_vault()` | Creates TokenVault PDA and associated token account for stream       | 2     | ✅ Complete |
-| `join_stream()`            | Transfers SPL tokens from viewer to vault as participation stake     | 2     | ✅ Complete |
-| `submit_prediction()`      | Submits prediction with SPL token stake (max 10 choices)             | 2     | ✅ Complete |
-| `end_stream()`             | Creator marks stream as ended                                        | 1     | ✅ Complete |
-| `resolve_prediction()`     | Oracle or creator finalizes result with winning choice               | 1     | ✅ Complete |
-| `claim_reward()`           | Winner claims SPL token rewards from vault (PDA-signed transfer)     | 2     | ✅ Complete |
+| Instruction                | Description                                                      | Phase | Status      |
+| -------------------------- | ---------------------------------------------------------------- | ----- | ----------- |
+| `create_stream()`          | Initializes a stream PDA linked to creator                       | 1     | ✅ Complete |
+| `initialize_token_vault()` | Creates TokenVault PDA and associated token account for stream   | 2     | ✅ Complete |
+| `join_stream()`            | Transfers SPL tokens from viewer to vault as participation stake | 2     | ✅ Complete |
+| `submit_prediction()`      | Submits prediction with SPL token stake (max 10 choices)         | 2     | ✅ Complete |
+| `end_stream()`             | Creator marks stream as ended                                    | 1     | ✅ Complete |
+| `resolve_prediction()`     | Oracle or creator finalizes result with winning choice           | 1     | ✅ Complete |
+| `claim_reward()`           | Winner claims SPL token rewards from vault (PDA-signed transfer) | 2     | ✅ Complete |
 
 **✨ Phase 2 Features:**
+
 - 🪙 Full SPL token integration with CPI transfers
 - 🔐 Secure TokenVault PDA for holding staked tokens
 - 💰 Actual reward distribution (2x multiplier for MVP)
@@ -32,6 +34,7 @@
 - 📚 [**View Phase 2 Documentation →**](./docs/PHASE2-INDEX.md)
 
 **Security Features:**
+
 - `MAX_CHOICES = 10` - Validated across all prediction-related instructions
 - Anchor constraints prevent unauthorized claims (`has_one`, `constraint`)
 - Double-claim prevention with `reward_claimed` flag
@@ -53,10 +56,12 @@
 ## 📚 Documentation
 
 ### 🎯 Getting Started
+
 - [Local Setup Guide](./LOCAL_SETUP.md) - Development environment setup
 - [CLI Quick Reference](./docs/CLI-QUICK-REF.md) - Command-line tool usage
 
 ### 🆕 Phase 2: Token Vault & Reward Distribution
+
 - **[📍 Phase 2 Index](./docs/PHASE2-INDEX.md)** - **START HERE** - Complete documentation hub
 - [Phase 2 Summary](./docs/PHASE2-SUMMARY.md) - Quick overview and statistics
 - [Phase 2 Quick Reference](./docs/PHASE2-QUICK-REF.md) - Developer usage guide
@@ -65,6 +70,7 @@
 - [Phase 2 Verification](./docs/PHASE2-VERIFICATION.md) - Testing checklist
 
 ### 📝 Source Code
+
 - [Anchor Program](./programs/cyphercast/src/lib.rs) - Smart contract source
 - [Phase 2 Tests](./tests/phase2-token-vault.ts) - Token vault test suite
 
@@ -132,6 +138,7 @@ MIT License - see [LICENSE](./LICENSE) file for details
 ### ✅ Phase 1 & 2 - Fully Implemented
 
 **Core Program Features (Phase 1):**
+
 - Anchor program with PDA-based architecture
 - **7 core instructions** including stream management and predictions
 - **Stream resolution system** - Oracle/creator finalizes outcomes
@@ -142,23 +149,42 @@ MIT License - see [LICENSE](./LICENSE) file for details
 - Local deployment ready
 
 **Token Vault & Rewards (Phase 2 ✅):**
-- ✅ **TokenVault PDA** - Secure on-chain vault for SPL tokens
+
+- ✅ **TokenVault PDA** - Secure on-chain vault for SPL tokens (89 bytes)
+  - Tracks `total_deposited` and `total_released` for full transparency
 - ✅ **Token Staking** - Users stake SPL tokens when joining/predicting
+  - Proper overflow handling with `checked_add()`
 - ✅ **Reward Distribution** - Winners receive tokens via PDA-signed transfers
 - ✅ **SPL Token Integration** - Complete CPI implementation
 - ✅ **Security Features** - Double-claim prevention, winner validation
-- ✅ **Comprehensive Tests** - 8 test cases covering all scenarios
+- ✅ **Code Quality** - DISCRIMINATOR constant, proper error handling
+- ✅ **Comprehensive Tests** - 8 test cases with TOKEN_DECIMALS constants
 - ✅ **Full Documentation** - 6 detailed guides and references
+- ✅ **GitHub Copilot Review** - All review comments resolved
 
 **📚 [Read Complete Phase 2 Documentation →](./docs/PHASE2-INDEX.md)**
 
 ### 🚧 Phase 3 - Coming Next
 
+**Frontend & User Experience:**
+
 - React frontend with wallet integration (Phantom/Solflare)
+- Real-time stream interface with prediction UI
+- Token balance and transaction history
+
+**Advanced Features:**
+
 - Proportional payout calculation for multiple winners
+- Platform fee mechanism (configurable fee_bps)
+- Emergency freeze/pause controls
+- Live streaming integration (YouTube/Twitch API)
+
+**Deployment & Testing:**
+
 - Devnet deployment and public testing
-- Live streaming integration (YouTube/Twitch)
-- Platform fee mechanism
+- Multi-user testing scenarios
+- Performance optimization
+- Security audit
 
 **Program ID (Localnet):** `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF`
 
@@ -493,6 +519,7 @@ For more CLI commands, see [docs/CLI-QUICK-REF.md](./docs/CLI-QUICK-REF.md)
 All transactions are recorded on Solana blockchain with **sub-second finality**.
 
 **Security Highlights:**
+
 - ✅ Stream must be resolved before claiming
 - ✅ Only correct predictions can claim rewards
 - ✅ Double-claim prevention with `reward_claimed` flag
@@ -512,12 +539,13 @@ For detailed architecture, see [Phase 2: Token Vault & Reward System](#-phase-2-
 
 ## 🧭 Roadmap
 
-| Phase                       | Goal                         | Key Deliverables                                                                                                                                                                                           | Status           |
-| --------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| **Phase 1 – MVP (Current)** | Technical proof of concept   | ✅ Anchor program with PDA architecture<br/>✅ CLI testing tool<br/>✅ All core instructions (create, join, predict, end, resolve, claim)<br/>✅ Reward claiming logic<br/>✅ Security constraints          | **80% Complete** |
-| **Phase 2 – Reward System** | Complete reward distribution | 🚧 Token Vault with ATA<br/>🚧 SPL token transfers via CPI<br/>🚧 Proportional payout calculation<br/>🚧 React frontend UI<br/>🚧 Devnet deployment                                                        | **In Progress**  |
-| **Phase 3 – Market Proof**  | Validate with real creators  | Beta site + social traction                                                                                                                                                                                | **Q1 2026**      |
-| **Phase 4 – Ecosystem**     | DAO + Revenue split protocol | Governance + mobile-native UX                                                                                                                                                                              | **Q2 2026**      |
+| Phase                       | Goal                         | Key Deliverables                                                                                                                                                                                                               | Status              |
+| --------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- |
+| **Phase 1 – MVP**           | Technical proof of concept   | ✅ Anchor program with PDA architecture<br/>✅ CLI testing tool<br/>✅ All core instructions (create, join, predict, end, resolve, claim)<br/>✅ Reward claiming logic<br/>✅ Security constraints                             | **✅ Complete**     |
+| **Phase 2 – Token Vault**   | Complete reward distribution | ✅ TokenVault PDA with ATA<br/>✅ SPL token transfers via CPI<br/>✅ VaultState tracking<br/>✅ Comprehensive tests<br/>✅ Full documentation                                                                                   | **✅ Complete**     |
+| **Phase 3 – Frontend & UX** | User-ready application       | 🚧 React frontend UI<br/>🚧 Wallet integration<br/>🚧 Proportional payout<br/>🚧 Platform fees<br/>🚧 Emergency controls<br/>🚧 Devnet deployment                                                                            | **🎯 Next (Nov'25)** |
+| **Phase 4 – Market Proof**  | Validate with real creators  | Live streaming integration<br/>Beta site + social traction<br/>Multi-token support                                                                                                                                            | **Q1 2026**         |
+| **Phase 5 – Ecosystem**     | DAO + Revenue split protocol | Governance + mobile-native UX                                                                                                                                                                                                  | **Q2 2026**         |
 
 ---
 

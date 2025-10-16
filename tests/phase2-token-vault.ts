@@ -20,6 +20,10 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
   const viewer1 = anchor.web3.Keypair.generate();
   const viewer2 = anchor.web3.Keypair.generate();
 
+  // Token configuration constants
+  const TOKEN_DECIMALS = 6;
+  const TOKEN_MULTIPLIER = 10 ** TOKEN_DECIMALS; // 1_000_000 for 6 decimals
+
   let tokenMint: anchor.web3.PublicKey;
   let creatorTokenAccount: anchor.web3.PublicKey;
   let viewer1TokenAccount: anchor.web3.PublicKey;
