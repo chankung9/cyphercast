@@ -214,7 +214,10 @@ pub mod cyphercast {
 
         // Calculate reward amount (simple equal distribution for MVP)
         // In production, this would be proportional based on total stakes
-        let reward_amount = prediction.stake_amount * 2; // 2x return for winners (simplified)
+        let reward_amount = prediction
+            .stake_amount
+            .checked_mul(2)
+            .ok_or(CypherCastError::Overflow)?; // 2x return for winners (simplified)
 
         // Transfer tokens from vault to winner using PDA signer
         let stream_key = stream.key();

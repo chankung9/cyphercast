@@ -77,7 +77,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
       tokenMint,
       viewer1TokenAccount,
       creator.publicKey,
-      1000 * 1_000_000, // 1000 tokens with 6 decimals
+      1000 * TOKEN_MULTIPLIER, // 1000 tokens with 6 decimals
       [],
       { commitment: "confirmed" },
       TOKEN_PROGRAM_ID
@@ -89,7 +89,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
       tokenMint,
       viewer2TokenAccount,
       creator.publicKey,
-      1000 * 1_000_000,
+      1000 * TOKEN_MULTIPLIER,
       [],
       { commitment: "confirmed" },
       TOKEN_PROGRAM_ID
@@ -173,7 +173,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
   });
 
   it("✅ Task 3: Joins stream with SPL token stake", async () => {
-    const stakeAmount = new anchor.BN(10 * 1_000_000); // 10 tokens
+    const stakeAmount = new anchor.BN(10 * TOKEN_MULTIPLIER); // 10 tokens
 
     const [participantPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [
@@ -233,7 +233,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
 
   it("✅ Task 3: Submits prediction with SPL token stake", async () => {
     const choice = 1;
-    const stakeAmount = new anchor.BN(20 * 1_000_000); // 20 tokens
+    const stakeAmount = new anchor.BN(20 * TOKEN_MULTIPLIER); // 20 tokens
 
     const [predictionPda] = anchor.web3.PublicKey.findProgramAddressSync(
       [
@@ -380,7 +380,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
       vaultBalanceBefore.amount - vaultBalanceAfter.amount
     ).to.equal(BigInt(rewardAmount));
     console.log("✓ Reward tokens transferred successfully");
-    console.log(`  Reward amount: ${rewardAmount / 1_000_000} tokens`);
+    console.log(`  Reward amount: ${rewardAmount / TOKEN_MULTIPLIER} tokens`);
   });
 
   it("❌ Should fail: Double claim prevention", async () => {
@@ -476,7 +476,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
     );
 
     await program.methods
-      .submitPrediction(2, new anchor.BN(5 * 1_000_000)) // Choice 2
+      .submitPrediction(2, new anchor.BN(5 * TOKEN_MULTIPLIER)) // Choice 2
       .accounts({
         stream: streamPda2,
         prediction: predictionPda,
@@ -537,7 +537,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
     );
 
     console.log("\n=== Phase 2 Test Summary ===");
-    console.log(`Vault balance: ${vaultBalance.amount.toString()} (${Number(vaultBalance.amount) / 1_000_000} tokens)`);
+    console.log(`Vault balance: ${vaultBalance.amount.toString()} (${Number(vaultBalance.amount) / TOKEN_MULTIPLIER} tokens)`);
     console.log(`Expected: 0 tokens (all rewards claimed)`);
     console.log("✓ All Phase 2 tasks completed successfully!");
   });
