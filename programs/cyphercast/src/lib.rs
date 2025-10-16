@@ -10,7 +10,7 @@ pub mod cyphercast {
 
     /// Maximum number of prediction choices supported by the program.
     pub const MAX_CHOICES: u8 = 10;
-    
+
     /// Size of the discriminator added by Anchor to all accounts
     pub const DISCRIMINATOR: usize = 8;
 
@@ -80,8 +80,14 @@ pub mod cyphercast {
         );
         token::transfer(cpi_ctx, stake_amount)?;
 
-        stream.total_stake = stream.total_stake.checked_add(stake_amount).ok_or(CypherCastError::Overflow)?;
-        vault.total_deposited = vault.total_deposited.checked_add(stake_amount).ok_or(CypherCastError::Overflow)?;
+        stream.total_stake = stream
+            .total_stake
+            .checked_add(stake_amount)
+            .ok_or(CypherCastError::Overflow)?;
+        vault.total_deposited = vault
+            .total_deposited
+            .checked_add(stake_amount)
+            .ok_or(CypherCastError::Overflow)?;
 
         participant.stream = stream.key();
         participant.viewer = *ctx.accounts.viewer.key;
@@ -122,7 +128,10 @@ pub mod cyphercast {
         );
         token::transfer(cpi_ctx, stake_amount)?;
 
-        vault.total_deposited = vault.total_deposited.checked_add(stake_amount).ok_or(CypherCastError::Overflow)?;
+        vault.total_deposited = vault
+            .total_deposited
+            .checked_add(stake_amount)
+            .ok_or(CypherCastError::Overflow)?;
 
         prediction.stream = stream.key();
         prediction.viewer = *ctx.accounts.viewer.key;
@@ -224,10 +233,13 @@ pub mod cyphercast {
         token::transfer(cpi_ctx, reward_amount)?;
 
         // Update vault tracking
-        ctx.accounts.vault.total_released = ctx.accounts.vault.total_released
+        ctx.accounts.vault.total_released = ctx
+            .accounts
+            .vault
+            .total_released
             .checked_add(reward_amount)
             .ok_or(CypherCastError::Overflow)?;
-        
+
         prediction.reward_claimed = true;
 
         msg!(
