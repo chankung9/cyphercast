@@ -22,3 +22,5 @@ target
 
 # Ignore node modules if you have a frontend in the same repository
 node_modules/
+# Anchor build artifacts
+.anchor/
