@@ -9,10 +9,15 @@
     "test": "anchor test",
     "test-local": "anchor test --skip-local-validator",
     "localnet": "solana-test-validator --reset --quiet",
-    "logs": "solana logs"
+    "logs": "solana logs",
+    "surf:start": "bash scripts/surfpool/start-validator.sh",
+    "surf:deploy": "bash scripts/surfpool/deploy-cyphercast.sh",
+    "surf:stop": "bash scripts/surfpool/stop-validator.sh",
+    "test:surf": "ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 anchor test --skip-local-validator",
+    "surf:test": "bash -c 'bash scripts/surfpool/start-validator.sh && npm run build && solana airdrop 100 && solana airdrop 100 && bash scripts/surfpool/deploy-cyphercast.sh && ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 anchor test --skip-local-validator --skip-deploy; code=$?; bash scripts/surfpool/stop-validator.sh; exit $code'"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.28.0",
+    "@coral-xyz/anchor": "^0.31.1",
     "@solana/web3.js": "^1.87.6",
     "@solana/spl-token": "^0.3.9"
   },
