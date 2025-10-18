@@ -323,11 +323,15 @@ pub mod cyphercast {
             .total_deposited
             .checked_sub(stream.tip_amount)
             .ok_or(CypherCastError::Overflow)?;
-        let reward_amount = (distributable as u128)
-            .checked_mul(prediction.stake_amount as u128)
-            .ok_or(CypherCastError::Overflow)?
-            .checked_div(winner_total as u128)
-            .ok_or(CypherCastError::Overflow)? as u64;
+        let reward_amount = if distributable == 0 {
+            0
+        } else {
+            (distributable as u128)
+                .checked_mul(prediction.stake_amount as u128)
+                .ok_or(CypherCastError::Overflow)?
+                .checked_div(winner_total as u128)
+                .ok_or(CypherCastError::Overflow)? as u64
+        };
 
         // Transfer tokens from vault to winner using PDA signer
         let stream_key = stream.key();
