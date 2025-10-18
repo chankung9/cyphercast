@@ -62,7 +62,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
   // Token configuration and stream config constants
   const TOKEN_DECIMALS = 6;
   const TOKEN_MULTIPLIER = 10 ** TOKEN_DECIMALS; // 1_000_000 for 6 decimals
-  const TIP_PERCENT = 3; // default 3%
+  const TIP_BPS = 300; // 3% in basis points
   const PRECISION = 6; // align with token decimals for this test
   const LOCK_OFFSET_SECS = 3600; // 1 hour cutoff
   const GRACE_PERIOD_SECS = 600; // 10 minutes
@@ -200,7 +200,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
         title,
         startTime,
         new BN(LOCK_OFFSET_SECS),
-        TIP_PERCENT,
+        TIP_BPS,
         PRECISION,
         new BN(GRACE_PERIOD_SECS),
       )
@@ -464,7 +464,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
 
     // Compute expected reward after tip deduction
     const tipAmount = Math.floor(
-      (predictionAccount.stakeAmount.toNumber() * TIP_PERCENT) / 100,
+      (predictionAccount.stakeAmount.toNumber() * TIP_BPS) / 10_000,
     );
     const rewardAmount = predictionAccount.stakeAmount.toNumber() - tipAmount;
 
@@ -658,7 +658,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
         "MW Stream",
         new BN(Math.floor(Date.now() / 1000)),
         new BN(LOCK_OFFSET_SECS),
-        TIP_PERCENT,
+        TIP_BPS,
         PRECISION,
         new BN(GRACE_PERIOD_SECS),
       )
@@ -777,7 +777,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
 
     // Expect tip = floor((s1+s2) * TIP_PERCENT / 100)
     const totalStake = s1.toNumber() + s2.toNumber();
-    const tipAmountMW = Math.floor((totalStake * TIP_PERCENT) / 100);
+    const tipAmountMW = Math.floor((totalStake * TIP_BPS) / 10_000);
     expect(
       creatorBalanceAfterMW.amount - creatorBalanceBeforeMW.amount,
     ).to.equal(BigInt(tipAmountMW));
@@ -867,7 +867,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
         "CR Stream",
         new BN(Math.floor(Date.now() / 1000)),
         new BN(LOCK_OFFSET_SECS),
-        TIP_PERCENT,
+        TIP_BPS,
         PRECISION,
         new BN(GRACE_PERIOD_SECS),
       )
@@ -1053,7 +1053,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
         "Events Stream",
         new BN(Math.floor(Date.now() / 1000)),
         new BN(LOCK_OFFSET_SECS),
-        TIP_PERCENT,
+        TIP_BPS,
         PRECISION,
         new BN(GRACE_PERIOD_SECS),
       )
@@ -1213,7 +1213,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
         "NoWinner Stream",
         new BN(Math.floor(Date.now() / 1000)),
         new BN(LOCK_OFFSET_SECS),
-        TIP_PERCENT,
+        TIP_BPS,
         PRECISION,
         new BN(GRACE_PERIOD_SECS),
       )
@@ -1345,7 +1345,7 @@ describe("Phase 2: Token Vault & Reward Distribution", () => {
         "AutoLock Stream",
         pastStart,
         new BN(1), // 1 second offset
-        TIP_PERCENT,
+        TIP_BPS,
         PRECISION,
         new BN(GRACE_PERIOD_SECS),
       )

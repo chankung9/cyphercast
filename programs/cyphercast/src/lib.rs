@@ -46,17 +46,14 @@ pub mod cyphercast {
         title: String,
         start_time: i64,
         lock_offset_secs: i64,
-        tip_percent: u8,
+        tip_bps: u16,
         precision: u8,
         grace_period_secs: i64,
     ) -> Result<()> {
         let stream = &mut ctx.accounts.stream;
         require!(title.as_bytes().len() <= 200, CypherCastError::TitleTooLong);
         require!(precision <= 9, CypherCastError::InvalidConfig);
-        require!(
-            (1..=10).contains(&tip_percent),
-            CypherCastError::InvalidConfig
-        );
+        require!(tip_bps <= 10_000, CypherCastError::InvalidConfig);
 
         stream.creator = *ctx.accounts.creator.key;
         stream.stream_id = stream_id;
@@ -66,7 +63,7 @@ pub mod cyphercast {
         // Phase 2.5 config
         stream.lock_offset_secs = lock_offset_secs;
         stream.grace_period_secs = grace_period_secs;
-        stream.tip_percent = tip_percent;
+        stream.tip_bps = tip_bps;
         stream.precision = precision;
         stream.config_hash = [0u8; 32]; // computed on activation in later phase
                                         // Aggregates
@@ -239,12 +236,9 @@ pub mod cyphercast {
         // Compute and distribute streamer tip (once) at resolve time
         // tip_amount = floor(vault.total_deposited * tip_percent / 100)
         let total_pool = ctx.accounts.vault.total_deposited;
-        if stream.tip_amount == 0 && stream.tip_percent > 0 {
-            let tip_amount = (total_pool as u128)
-                .checked_mul(stream.tip_percent as u128)
-                .ok_or(CypherCastError::Overflow)?
-                .checked_div(100)
-                .ok_or(CypherCastError::Overflow)? as u64;
+        if stream.tip_amount == 0 && stream.tip_bps > 0 {
+            let tip_amount =
+                ((total_pool as u128).saturating_mul(stream.tip_bps as u128) / 10_000u128) as u64;
 
             if tip_amount > 0 {
                 let stream_key = stream.key();
@@ -392,7 +386,7 @@ pub mod cyphercast {
         // Compute config hash to freeze settings
         let h = anchor_lang::solana_program::hash::hashv(&[
             stream.title.as_bytes(),
-            &[stream.tip_percent],
+            &stream.tip_bps.to_le_bytes(),
             &[stream.precision],
             &stream.lock_offset_secs.to_le_bytes(),
             &stream.grace_period_secs.to_le_bytes(),
@@ -769,8 +763,8 @@ pub struct Stream {
     // Phase 2.5 config fields
     pub lock_offset_secs: i64,
     pub grace_period_secs: i64,
-    pub tip_percent: u8, // 1..=10
-    pub precision: u8,   // <= 9
+    pub tip_bps: u16,  // 0..=10_000
+    pub precision: u8, // <= 9
     pub config_hash: [u8; 32],
     // Aggregates
     pub total_stake: u64,
@@ -795,7 +789,7 @@ impl Stream {
         8 + // end_time
         8 + // lock_offset_secs
         8 + // grace_period_secs
-        1 + // tip_percent
+        2 + // tip_bps
         1 + // precision
         32 + // config_hash
         8 + // total_stake

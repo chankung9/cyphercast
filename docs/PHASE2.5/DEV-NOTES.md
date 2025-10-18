@@ -28,7 +28,7 @@ Stream fields (high-level):
 - end_time: i64
 - lock_offset_secs: i64
 - grace_period_secs: i64
-- tip_percent: u8 (1..=10)
+- tip_bps: u16 (0..=10_000)
 - precision: u8 (<= 9)
 - config_hash: [u8; 32] (set on activation)
 - total_stake: u64 (sum of all stake amounts)
@@ -84,7 +84,7 @@ Note: For Phase 2.5 we keep PDAs stable. Config updates never change PDAs (confi
 
 All instructions follow Anchor’s `.methods.<ix>(...).accounts({...}).rpc()` client pattern.
 
-1) create_stream(stream_id: u64, title: String, start_time: i64, lock_offset_secs: i64, tip_percent: u8, precision: u8, grace_period_secs: i64)
+1) create_stream(stream_id: u64, title: String, start_time: i64, lock_offset_secs: i64, tip_bps: u16, precision: u8, grace_period_secs: i64)
 - Accounts:
   - stream (PDA, init, seeds ["stream", creator, stream_id])
   - creator (signer)
@@ -92,7 +92,7 @@ All instructions follow Anchor’s `.methods.<ix>(...).accounts({...}).rpc()` cl
 - Validations:
   - title <= 200 bytes
   - precision <= 9
-  - tip_percent in [1,10]
+  - tip_bps <= 10_000
 - Initializes config fields and counters. Stream is marked active (legacy) but not yet “frozen”.
 
 2) activate_stream()
@@ -100,7 +100,7 @@ All instructions follow Anchor’s `.methods.<ix>(...).accounts({...}).rpc()` cl
   - stream (mut)
   - creator (signer)
 - Effects:
-  - Computes config_hash from (title, tip_percent, precision, lock_offset_secs, grace_period_secs) to freeze config.
+  - Computes config_hash from (title, tip_bps, precision, lock_offset_secs, grace_period_secs) to freeze config.
   - Fails if already activated, canceled, or resolved.
 
 3) initialize_token_vault()
@@ -239,7 +239,7 @@ All instructions follow Anchor’s `.methods.<ix>(...).accounts({...}).rpc()` cl
 ## Reward Math (Phase 2.5)
 
 - Tip (paid once at resolve):
-  - tip_amount = floor(total_pool * tip_percent / 100)
+  - tip_amount = floor(total_pool * tip_bps / 10_000)
   - total_pool = vault.total_deposited
 
 - Proportional rewards (per claim):
