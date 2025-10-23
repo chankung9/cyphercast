@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "lib": [
-      "es2020"
-    ],
+    "lib": ["es2020"],
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
@@ -12,22 +10,9 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
-    "types": [
-      "mocha",
-      "chai",
-      "node"
-    ]
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["mocha", "chai", "node"]
   },
-  "include": [
-    "tests/**/*",
-    "app/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "target",
-    "dist"
-  ]
+  "include": ["tests/**/*"],
+  "exclude": ["node_modules", "target", "dist"]
 }

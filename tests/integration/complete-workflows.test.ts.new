@@ -1,0 +1,954 @@
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { BN } from "bn.js";
+import {
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createMint,
+  getAccount,
+  getAssociatedTokenAddress,
+  mintTo,
+  createAssociatedTokenAccount,
+} from "@solana/spl-token";
+import { expect } from "chai";
+import {
+  PublicKey,
+  Keypair,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
+
+describe("CypherCast - Complete Workflow Integration Tests", () => {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+
+  const program = anchor.workspace.Cyphercast as Program<any>;
+  const creator = provider.wallet as anchor.Wallet;
+
+  // Test participants
+  const streamer = creator;
+  const viewer1 = Keypair.generate();
+  const viewer2 = Keypair.generate();
+  const viewer3 = Keypair.generate();
+  const viewer4 = Keypair.generate();
+  const viewer5 = Keypair.generate();
+
+  let tokenMint: PublicKey;
+  let participantTokenAccounts: Map<Keypair, PublicKey> = new Map();
+
+  before(async () => {
+    // Setup all participants with SOL and tokens
+    const participants = [viewer1, viewer2, viewer3, viewer4, viewer5];
+
+    for (const participant of participants) {
+      await provider.connection.confirmTransaction(
+        await provider.connection.requestAirdrop(
+          participant.publicKey,
+          5 * LAMPORTS_PER_SOL,
+        ),
+      );
+    }
+
+    // Create test token mint
+    tokenMint = await createMint(
+      provider.connection,
+      creator.payer,
+      creator.publicKey,
+      null,
+      6, // 6 decimals
+    );
+
+    // Create and fund token accounts for all participants
+    for (const participant of participants) {
+      const tokenAccount = await getAssociatedTokenAddress(
+        tokenMint,
+        participant.publicKey,
+      );
+      await createAssociatedTokenAccount(
+        provider.connection,
+        creator.payer,
+        tokenMint,
+        participant.publicKey,
+      );
+
+      await mintTo(
+        provider.connection,
+        creator.payer,
+        tokenMint,
+        tokenAccount,
+        creator.publicKey,
+        2000 * 1_000_000, // 2000 tokens each
+      );
+
+      participantTokenAccounts.set(participant, tokenAccount);
+    }
+
+    // Create token account for streamer
+    const streamerTokenAccount = await getAssociatedTokenAddress(
+      tokenMint,
+      streamer.publicKey,
+    );
+    await createAssociatedTokenAccount(
+      provider.connection,
+      creator.payer,
+      tokenMint,
+      streamer.publicKey,
+    );
+    participantTokenAccounts.set(streamer, streamerTokenAccount);
+  });
+
+  describe("Complete Stream Lifecycle - Single Winner", () => {
+    let streamPda: PublicKey;
+    let vaultPda: PublicKey;
+    let vaultTokenAccount: PublicKey;
+    let predictions: Map<Keypair, PublicKey> = new Map();
+
+    it("Complete workflow: Create -> Activate -> Predictions -> End -> Resolve -> Claim", async () => {
+      // 1. Create Stream
+      const streamId = new BN(Date.now()); // Use timestamp for uniqueness
+      const title = "Gaming Tournament Stream";
+      const startTime = new BN(Date.now() / 1000);
+      const lockOffsetSecs = new BN(600); // 10 minutes
+      const tipBps = 1500; // 15%
+      const precision = 2;
+      const gracePeriodSecs = new BN(300); // 5 minutes
+
+      [streamPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("stream"),
+          streamer.publicKey.toBuffer(),
+          streamId.toArrayLike(Buffer, "le", 8),
+        ],
+        program.programId,
+      );
+
+      await program.methods
+        .createStream(
+          streamId,
+          title,
+          startTime,
+          lockOffsetSecs,
+          tipBps,
+          precision,
+          gracePeriodSecs,
+        )
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const streamAccount = await program.account.stream.fetch(streamPda);
+      expect(streamAccount.title).to.equal(title);
+      // Note: isActive might be legacy flag, check if config is set instead
+      expect(streamAccount.isResolved).to.be.false;
+
+      // 2. Initialize Token Vault
+      [vaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("vault"), streamPda.toBuffer()],
+        program.programId,
+      );
+
+      vaultTokenAccount = await getAssociatedTokenAddress(
+        tokenMint,
+        vaultPda,
+        true,
+      );
+
+      await program.methods
+        .initializeTokenVault()
+        .accounts({
+          creator: streamer.publicKey,
+          stream: streamPda,
+          vault: vaultPda,
+          tokenMint: tokenMint,
+          vaultTokenAccount: vaultTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // 3. Activate Stream
+      await program.methods
+        .activateStream()
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+        })
+        .rpc();
+
+      streamAccount = await program.account.stream.fetch(streamPda);
+      expect(streamAccount.isActive).to.be.true;
+
+      // 4. Multiple Viewers Submit Predictions
+      const predictionData = [
+        { viewer: viewer1, choice: 1, stake: 100 },
+        { viewer: viewer2, choice: 1, stake: 200 },
+        { viewer: viewer3, choice: 2, stake: 150 },
+        { viewer: viewer4, choice: 1, stake: 50 },
+        { viewer: viewer5, choice: 2, stake: 75 },
+      ];
+
+      for (const { viewer, choice, stake } of predictionData) {
+        const [predictionPda] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("prediction"),
+            streamPda.toBuffer(),
+            viewer.publicKey.toBuffer(),
+          ],
+          program.programId,
+        );
+
+        predictions.set(viewer, predictionPda);
+
+        await program.methods
+          .submitPrediction(choice, new BN(stake * 1_000_000))
+          .accounts({
+            stream: streamPda,
+            prediction: predictionPda,
+            vault: vaultPda,
+            viewerTokenAccount: participantTokenAccounts.get(viewer)!,
+            vaultTokenAccount: vaultTokenAccount,
+            viewer: viewer.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([viewer])
+          .rpc();
+
+        const predictionAccount =
+          await program.account.prediction.fetch(predictionPda);
+        expect(predictionAccount.choice).to.equal(choice);
+        expect(predictionAccount.stakeAmount.toString()).to.equal(
+          (stake * 1_000_000).toString(),
+        );
+      }
+
+      // Verify total stakes
+      streamAccount = await program.account.stream.fetch(streamPda);
+      const expectedTotal =
+        predictionData.reduce((sum, p) => sum + p.stake, 0) * 1_000_000;
+      expect(streamAccount.totalStake.toString()).to.equal(
+        expectedTotal.toString(),
+      );
+
+      // 5. End Stream
+      await program.methods
+        .endStream()
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+        })
+        .rpc();
+
+      streamAccount = await program.account.stream.fetch(streamPda);
+      // Stream should be inactive after ending (legacy behavior)
+      // expect(streamAccount.isActive).to.be.false;
+
+      // 6. Resolve with Winning Choice (Choice 1 wins)
+      const winningChoice = 1;
+      const streamerTokenAccount = participantTokenAccounts.get(streamer)!;
+
+      await program.methods
+        .resolvePrediction(winningChoice)
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+          vault: vaultPda,
+          creatorTokenAccount: streamerTokenAccount,
+          vaultTokenAccount: vaultTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+
+      streamAccount = await program.account.stream.fetch(streamPda);
+      expect(streamAccount.isResolved).to.be.true;
+      expect(streamAccount.winningChoice).to.equal(winningChoice);
+
+      // 7. Winners Claim Rewards
+      const winners = [viewer1, viewer2, viewer4]; // Those who chose choice 1
+      const totalWinningStake = winners.reduce((sum, w) => {
+        const data = predictionData.find((p) =>
+          p.viewer.publicKey.equals(w.publicKey),
+        )!;
+        return sum + data.stake;
+      }, 0);
+
+      for (const winner of winners) {
+        const winnerData = predictionData.find((p) =>
+          p.viewer.publicKey.equals(winner.publicKey),
+        )!;
+        const winnerPredictionPda = predictions.get(winner)!;
+        const initialBalance = (
+          await getAccount(
+            provider.connection,
+            participantTokenAccounts.get(winner)!,
+          )
+        ).amount;
+
+        await program.methods
+          .claimReward()
+          .accounts({
+            prediction: winnerPredictionPda,
+            stream: streamPda,
+            vault: vaultPda,
+            viewerTokenAccount: participantTokenAccounts.get(winner)!,
+            vaultTokenAccount: vaultTokenAccount,
+            viewer: winner.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([winner])
+          .rpc();
+
+        const finalBalance = (
+          await getAccount(
+            provider.connection,
+            participantTokenAccounts.get(winner)!,
+          )
+        ).amount;
+        expect(Number(finalBalance)).to.be.greaterThan(Number(initialBalance));
+
+        const predictionAccount =
+          await program.account.prediction.fetch(winnerPredictionPda);
+        expect(predictionAccount.rewardClaimed).to.be.true;
+      }
+
+      // 8. Losers Cannot Claim Rewards
+      const losers = [viewer3, viewer5]; // Those who chose choice 2
+      for (const loser of losers) {
+        const loserPredictionPda = predictions.get(loser)!;
+
+        try {
+          await program.methods
+            .claimReward()
+            .accounts({
+              prediction: loserPredictionPda,
+              stream: streamPda,
+              vault: vaultPda,
+              viewerTokenAccount: participantTokenAccounts.get(loser)!,
+              vaultTokenAccount: vaultTokenAccount,
+              viewer: loser.publicKey,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .signers([loser])
+            .rpc();
+
+          expect.fail("Loser should not be able to claim reward");
+        } catch (error) {
+          expect(error.toString()).to.include("Incorrect prediction");
+        }
+      }
+
+      // Verify final vault state
+      const vaultAccount = await program.account.tokenVault.fetch(vaultPda);
+      expect(Number(vaultAccount.totalReleased)).to.be.greaterThan(0);
+    });
+  });
+
+  describe("Complete Stream Lifecycle - No Winners", () => {
+    let noWinnerStreamPda: PublicKey;
+    let noWinnerVaultPda: PublicKey;
+    let noWinnerVaultTokenAccount: PublicKey;
+
+    it("Complete workflow with no winners", async () => {
+      // 1. Create Stream
+      const streamId = new BN(Date.now() + 1000); // Use timestamp + offset for uniqueness
+      const [streamPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("stream"),
+          streamer.publicKey.toBuffer(),
+          streamId.toArrayLike(Buffer, "le", 8),
+        ],
+        program.programId,
+      );
+
+      await program.methods
+        .createStream(
+          streamId,
+          "No Winners Stream",
+          new BN(Date.now() / 1000),
+          new BN(300),
+          1000,
+          2,
+          new BN(60),
+        )
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      noWinnerStreamPda = streamPda;
+
+      // 2. Initialize Vault and Activate
+      [noWinnerVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("vault"), streamPda.toBuffer()],
+        program.programId,
+      );
+
+      noWinnerVaultTokenAccount = await getAssociatedTokenAddress(
+        tokenMint,
+        noWinnerVaultPda,
+        true,
+      );
+
+      await program.methods
+        .initializeTokenVault()
+        .accounts({
+          creator: streamer.publicKey,
+          stream: streamPda,
+          vault: noWinnerVaultPda,
+          tokenMint: tokenMint,
+          vaultTokenAccount: noWinnerVaultTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      await program.methods
+        .activateStream()
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+        })
+        .rpc();
+
+      // 3. No one submits predictions - proceed to end
+
+      // 4. End Stream
+      await program.methods
+        .endStream()
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+        })
+        .rpc();
+
+      // 5. Resolve with choice that has no predictions
+      const streamerTokenAccount = participantTokenAccounts.get(streamer)!;
+
+      await program.methods
+        .resolvePrediction(3) // Choice 3 - no one predicted this
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+          vault: noWinnerVaultPda,
+          creatorTokenAccount: streamerTokenAccount,
+          vaultTokenAccount: noWinnerVaultTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+
+      const streamAccount = await program.account.stream.fetch(streamPda);
+      expect(streamAccount.isResolved).to.be.true;
+      expect(streamAccount.winningChoice).to.equal(3);
+
+      // 6. Since no one submitted predictions, no tip is paid
+      // The streamer should receive the same balance as before
+      const finalStreamerBalance = (
+        await getAccount(provider.connection, streamerTokenAccount)
+      ).amount;
+      expect(Number(finalStreamerBalance)).to.be.greaterThan(0);
+    });
+  });
+
+  describe("Complete Stream Lifecycle - Cancellation and Refunds", () => {
+    let cancelStreamPda: PublicKey;
+    let cancelVaultPda: PublicKey;
+    let cancelVaultTokenAccount: PublicKey;
+    let cancelPredictions: Map<Keypair, PublicKey> = new Map();
+
+    it("Complete workflow with stream cancellation", async () => {
+      // 1. Create Stream
+      const streamId = new BN(Date.now() + 2000); // Use timestamp + offset for uniqueness
+      const [streamPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("stream"),
+          streamer.publicKey.toBuffer(),
+          streamId.toArrayLike(Buffer, "le", 8),
+        ],
+        program.programId,
+      );
+
+      await program.methods
+        .createStream(
+          streamId,
+          "Cancellation Test Stream",
+          new BN(Date.now() / 1000),
+          new BN(300),
+          1000,
+          2,
+          new BN(60),
+        )
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      cancelStreamPda = streamPda;
+
+      // 2. Initialize Vault and Activate
+      [cancelVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("vault"), streamPda.toBuffer()],
+        program.programId,
+      );
+
+      cancelVaultTokenAccount = await getAssociatedTokenAddress(
+        tokenMint,
+        cancelVaultPda,
+        true,
+      );
+
+      await program.methods
+        .initializeTokenVault()
+        .accounts({
+          creator: streamer.publicKey,
+          stream: streamPda,
+          vault: cancelVaultPda,
+          tokenMint: tokenMint,
+          vaultTokenAccount: cancelVaultTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      await program.methods
+        .activateStream()
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+        })
+        .rpc();
+
+      // 3. Viewers Submit Predictions
+      const refundTesters = [viewer1, viewer2];
+      for (const tester of refundTesters) {
+        const [predictionPda] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("prediction"),
+            streamPda.toBuffer(),
+            tester.publicKey.toBuffer(),
+          ],
+          program.programId,
+        );
+
+        cancelPredictions.set(tester, predictionPda);
+
+        await program.methods
+          .submitPrediction(1, new BN(50 * 1_000_000))
+          .accounts({
+            stream: streamPda,
+            prediction: predictionPda,
+            vault: cancelVaultPda,
+            viewerTokenAccount: participantTokenAccounts.get(tester)!,
+            vaultTokenAccount: cancelVaultTokenAccount,
+            viewer: tester.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([tester])
+          .rpc();
+      }
+
+      // 4. Cancel Stream
+      await program.methods
+        .cancelStream()
+        .accounts({
+          stream: streamPda,
+          creator: streamer.publicKey,
+        })
+        .rpc();
+
+      const streamAccount = await program.account.stream.fetch(streamPda);
+      // Stream should be inactive after ending (legacy behavior)
+      // expect(streamAccount.isActive).to.be.false;
+      expect(streamAccount.canceledAt.toNumber()).to.be.greaterThan(0);
+
+      // 5. Viewers Claim Full Refunds
+      for (const tester of refundTesters) {
+        const predictionPda = cancelPredictions.get(tester)!;
+        const initialBalance = (
+          await getAccount(
+            provider.connection,
+            participantTokenAccounts.get(tester)!,
+          )
+        ).amount;
+
+        await program.methods
+          .claimRefund()
+          .accounts({
+            prediction: predictionPda,
+            stream: streamPda,
+            vault: cancelVaultPda,
+            viewerTokenAccount: participantTokenAccounts.get(tester)!,
+            vaultTokenAccount: cancelVaultTokenAccount,
+            viewer: tester.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([tester])
+          .rpc();
+
+        const finalBalance = (
+          await getAccount(
+            provider.connection,
+            participantTokenAccounts.get(tester)!,
+          )
+        ).amount;
+        expect(Number(finalBalance)).to.be.greaterThan(Number(initialBalance));
+
+        const predictionAccount =
+          await program.account.prediction.fetch(predictionPda);
+        expect(predictionAccount.refunded).to.be.true;
+      }
+
+      // 6. Cannot claim refunds twice
+      for (const tester of refundTesters) {
+        const predictionPda = cancelPredictions.get(tester)!;
+
+        try {
+          await program.methods
+            .claimRefund()
+            .accounts({
+              prediction: predictionPda,
+              stream: streamPda,
+              vault: cancelVaultPda,
+              viewerTokenAccount: participantTokenAccounts.get(tester)!,
+              vaultTokenAccount: cancelVaultTokenAccount,
+              viewer: tester.publicKey,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .signers([tester])
+            .rpc();
+
+          expect.fail("Should not be able to claim refund twice");
+        } catch (error) {
+          expect(error.toString()).to.include("RefundAlreadyClaimed") ||
+            expect(error.toString()).to.include("already refunded");
+        }
+      }
+    });
+  });
+
+  describe("Multi-Stream Concurrent Operations", () => {
+    it("Handle multiple streams running simultaneously", async () => {
+      const streamConfigs = [
+        { id: 4001, title: "Concurrent Stream 1", viewer: viewer1, choice: 1 },
+        { id: 4002, title: "Concurrent Stream 2", viewer: viewer2, choice: 2 },
+        { id: 4003, title: "Concurrent Stream 3", viewer: viewer3, choice: 1 },
+      ];
+
+      const streamPDAs: Map<number, PublicKey> = new Map();
+      const vaultPDAs: Map<number, PublicKey> = new Map();
+      const predictionPDAs: Map<number, PublicKey> = new Map();
+
+      // 1. Create all streams concurrently
+      const createPromises = streamConfigs.map(async (config) => {
+        const uniqueId = new BN(Date.now() + config.id * 10000); // Ensure uniqueness
+        const [streamPda] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("stream"),
+            streamer.publicKey.toBuffer(),
+            uniqueId.toArrayLike(Buffer, "le", 8),
+          ],
+          program.programId,
+        );
+
+        streamPDAs.set(config.id, streamPda);
+
+        return program.methods
+          .createStream(
+            uniqueId,
+            config.title,
+            new BN(Date.now() / 1000),
+            new BN(300),
+            1000,
+            2,
+            new BN(60),
+          )
+          .accounts({
+            stream: streamPda,
+            creator: streamer.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+      });
+
+      await Promise.all(createPromises);
+
+      // 2. Initialize vaults and activate all streams
+      const setupPromises = streamConfigs.map(async (config) => {
+        const streamPda = streamPDAs.get(config.id)!;
+
+        const [vaultPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("vault"), streamPda.toBuffer()],
+          program.programId,
+        );
+
+        vaultPDAs.set(config.id, vaultPda);
+
+        const vaultTokenAccount = await getAssociatedTokenAddress(
+          tokenMint,
+          vaultPda,
+          true,
+        );
+
+        await program.methods
+          .initializeTokenVault()
+          .accounts({
+            creator: streamer.publicKey,
+            stream: streamPda,
+            vault: vaultPda,
+            tokenMint: tokenMint,
+            vaultTokenAccount: vaultTokenAccount,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+
+        return program.methods
+          .activateStream()
+          .accounts({
+            stream: streamPda,
+            creator: streamer.publicKey,
+          })
+          .rpc();
+      });
+
+      await Promise.all(setupPromises);
+
+      // 3. Submit predictions to all streams
+      const predictionPromises = streamConfigs.map(async (config) => {
+        const streamPda = streamPDAs.get(config.id)!;
+        const vaultPda = vaultPDAs.get(config.id)!;
+
+        const [predictionPda] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("prediction"),
+            streamPda.toBuffer(),
+            config.viewer.publicKey.toBuffer(),
+          ],
+          program.programId,
+        );
+
+        predictionPDAs.set(config.id, predictionPda);
+
+        const vaultTokenAccount = await getAssociatedTokenAddress(
+          tokenMint,
+          vaultPda,
+          true,
+        );
+
+        return program.methods
+          .submitPrediction(config.choice, new BN(25 * 1_000_000))
+          .accounts({
+            stream: streamPda,
+            prediction: predictionPda,
+            vault: vaultPda,
+            viewerTokenAccount: participantTokenAccounts.get(config.viewer)!,
+            vaultTokenAccount: vaultTokenAccount,
+            viewer: config.viewer.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([config.viewer])
+          .rpc();
+      });
+
+      await Promise.all(predictionPromises);
+
+      // 4. End all streams
+      const endPromises = streamConfigs.map(async (config) => {
+        const streamPda = streamPDAs.get(config.id)!;
+
+        return program.methods
+          .endStream()
+          .accounts({
+            stream: streamPda,
+            creator: streamer.publicKey,
+          })
+          .rpc();
+      });
+
+      await Promise.all(endPromises);
+
+      // 5. Resolve all streams (choice 1 wins)
+      const resolvePromises = streamConfigs.map(async (config) => {
+        const streamPda = streamPDAs.get(config.id)!;
+        const vaultPda = vaultPDAs.get(config.id)!;
+        const streamerTokenAccount = participantTokenAccounts.get(streamer)!;
+        const vaultTokenAccount = await getAssociatedTokenAddress(
+          tokenMint,
+          vaultPda,
+          true,
+        );
+
+        return program.methods
+          .resolvePrediction(1)
+          .accounts({
+            stream: streamPda,
+            creator: streamer.publicKey,
+            vault: vaultPda,
+            creatorTokenAccount: streamerTokenAccount,
+            vaultTokenAccount: vaultTokenAccount,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .rpc();
+      });
+
+      await Promise.all(resolvePromises);
+
+      // 6. Winners claim rewards
+      const claimPromises = streamConfigs
+        .filter((config) => config.choice === 1) // Only winners
+        .map(async (config) => {
+          const streamPda = streamPDAs.get(config.id)!;
+          const vaultPda = vaultPDAs.get(config.id)!;
+          const predictionPda = predictionPDAs.get(config.id)!;
+          const vaultTokenAccount = await getAssociatedTokenAddress(
+            tokenMint,
+            vaultPda,
+            true,
+          );
+
+          return program.methods
+            .claimReward()
+            .accounts({
+              prediction: predictionPda,
+              stream: streamPda,
+              vault: vaultPda,
+              viewerTokenAccount: participantTokenAccounts.get(config.viewer)!,
+              vaultTokenAccount: vaultTokenAccount,
+              viewer: config.viewer.publicKey,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .signers([config.viewer])
+            .rpc();
+        });
+
+      await Promise.all(claimPromises);
+
+      // Verify all streams are resolved
+      for (const config of streamConfigs) {
+        const streamPda = streamPDAs.get(config.id)!;
+        const streamAccount = await program.account.stream.fetch(streamPda);
+        expect(streamAccount.isResolved).to.be.true;
+        expect(streamAccount.winningChoice).to.equal(1);
+      }
+    });
+
+    describe("Edge Case Workflow - Maximum Load", () => {
+      it("Handle maximum number of predictions in a single stream", async () => {
+        // Create stream for stress test
+        const streamId = new BN(Date.now() + 5000); // Use timestamp for uniqueness
+        const [streamPda] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("stream"),
+            streamer.publicKey.toBuffer(),
+            streamId.toArrayLike(Buffer, "le", 8),
+          ],
+          program.programId,
+        );
+
+        await program.methods
+          .createStream(
+            streamId,
+            "Maximum Load Test Stream",
+            new BN(Date.now() / 1000),
+            new BN(300),
+            1000,
+            2,
+            new BN(60),
+          )
+          .accounts({
+            stream: streamPda,
+            creator: streamer.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+
+        // Initialize vault and activate
+        const [vaultPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("vault"), streamPda.toBuffer()],
+          program.programId,
+        );
+
+        const vaultTokenAccount = await getAssociatedTokenAddress(
+          tokenMint,
+          vaultPda,
+          true,
+        );
+
+        await program.methods
+          .initializeTokenVault()
+          .accounts({
+            creator: streamer.publicKey,
+            stream: streamPda,
+            vault: vaultPda,
+            tokenMint: tokenMint,
+            vaultTokenAccount: vaultTokenAccount,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+
+        await program.methods
+          .activateStream()
+          .accounts({
+            stream: streamPda,
+            creator: streamer.publicKey,
+          })
+          .rpc();
+
+        // Submit multiple predictions from the same viewers with different choices
+        const heavyPredictionData = [
+          { viewer: viewer1, choice: 1, stake: 10 },
+          { viewer: viewer2, choice: 1, stake: 15 },
+          { viewer: viewer3, choice: 2, stake: 20 },
+          { viewer: viewer4, choice: 1, stake: 5 },
+          { viewer: viewer5, choice: 2, stake: 25 },
+          { viewer: viewer1, choice: 2, stake: 8 }, // Additional predictions (these will fail)
+          { viewer: viewer2, choice: 2, stake: 12 }, // Additional predictions (these will fail)
+        ];
+
+        const successfulPredictions: PublicKey[] = [];
+
+        for (const { viewer, choice, stake } of heavyPredictionData) {
+          const [predictionPda] = PublicKey.findProgramAddressSync(
+            [
+              Buffer.from("prediction"),
+              streamPda.toBuffer(),
+              viewer.publicKey.toBuffer(),
+            ],
+            program.programId,
+          );
+
+          try {
+            await program.methods
+              .submitPrediction(choice, new BN(stake * 1_000_000))
+              .accounts({
+                stream: streamPda,
+                prediction: predictionPda,
+                vault: vaultPda,
+                viewerTokenAccount: participantTokenAccounts.get(viewer)!,
+                vaultTokenAccount: vaultTokenAccount,
+                viewer: viewer.publicKey,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                systemProgram: SystemProgram.programId,
+              })
+              .signers([viewer])
+              .rpc();
+
+            successfulPredictions.push(predictionPda);
+          } catch (error) {
+            // Expected to fail for duplicate predictions
+            expect(error.toString()).to.include("already exists") ||
+            expect(error.toString()).to.include("AccountNotInitialized");

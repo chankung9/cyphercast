@@ -2,19 +2,14 @@
   "name": "cyphercast",
   "version": "0.1.0",
   "description": "CypherCast - Interactive streaming platform on Solana",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "build": "anchor build",
-    "deploy": "anchor deploy",
     "test": "anchor test",
-    "test-local": "anchor test --skip-local-validator",
-    "localnet": "solana-test-validator --reset --quiet",
-    "logs": "solana logs",
-    "surf:start": "bash scripts/surfpool/start-validator.sh",
-    "surf:deploy": "bash scripts/surfpool/deploy-cyphercast.sh",
-    "surf:stop": "bash scripts/surfpool/stop-validator.sh",
-    "test:surf": "ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 anchor test --skip-local-validator",
-    "surf:test": "bash -c 'bash scripts/surfpool/start-validator.sh && npm run build && solana airdrop 100 && solana airdrop 100 && bash scripts/surfpool/deploy-cyphercast.sh && ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 anchor test --skip-local-validator --skip-deploy; code=$?; bash scripts/surfpool/stop-validator.sh; exit $code'"
+    "test:skip-validator": "anchor test --skip-local-validator",
+    "idl": "anchor idl build --out-ts target/types/cyphercast.ts",
+    "clean": "anchor clean"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",

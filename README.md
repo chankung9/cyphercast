@@ -1,5 +1,16 @@
 # 🎬 CypherCast — _Watch. Predict. Earn._
 
+## 🧪 การทดสอบแบบง่าย (คำสั่งเดียว)
+
+ทดสอบทั้งหมดด้วยคำสั่งเดียว โดยไม่ต้องตั้งค่าอะไรเพิ่มเติม:
+- รัน: `npm test` หรือ `anchor test`
+
+รายละเอียด:
+- คำสั่งจะสปิน `solana-test-validator` แบบอัตโนมัติ และโหลดโปรแกรมตาม `Anchor.toml` ([test.genesis]) เพื่อให้ Program ID ตรงกัน
+
+- ต้องติดตั้ง Solana CLI และ Anchor เวอร์ชันตามโปรเจกต์ (Anchor 0.31.1)
+- เลือกทดสอบเฉพาะไฟล์ได้ด้วย: `anchor test tests/phase2-token-vault.ts`
+
 > **On-chain Interactive Streaming Layer built on Solana.**  
 > Engage audiences with live predictions, token staking, and transparent rewards — powered by Anchor & PDAs.
 
@@ -245,7 +256,7 @@ flowchart TD
     %% OFFCHAIN LAYER
     subgraph offchain [Off-chain Services]
         direction TB
-        ob1[Surfpool SDK\nTesting]
+        ob1[Local Testing\nHarness]
         ob2[Oracle Script\nMock Resolver]
         ob3[Metadata IPFS]
         ob4[API Gateway / WebSocket]
