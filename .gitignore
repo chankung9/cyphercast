@@ -22,3 +22,23 @@ target
 
 # Ignore node modules if you have a frontend in the same repository
 node_modules/
+# Anchor build artifacts
+.anchor/
+
+
+# Test ledger and validator files
+test-ledger/
+*.tar.bz2
+*.log
+*.sst
+*.bin
+MANIFEST-*
+CURRENT
+IDENTITY
+LOCK
+LOG.old.*
+
+# Test backup files
+*.bak
+*.new
+
