@@ -635,6 +635,113 @@ describe("CypherCast - Error Handling Edge Cases", () => {
       }
     });
 
+    it("Rejects resolving a canceled stream", async () => {
+      const streamId = new BN(6004);
+      const [canceledStreamPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("stream"),
+          creator.publicKey.toBuffer(),
+          streamId.toArrayLike(Buffer, "le", 8),
+        ],
+        program.programId,
+      );
+
+      await program.methods
+        .createStream(
+          streamId,
+          "Canceled Resolution Guard",
+          new BN(Math.floor(Date.now() / 1000)),
+          new BN(300),
+          500,
+          2,
+          new BN(60),
+        )
+        .accounts({
+          stream: canceledStreamPda,
+          creator: creator.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const [canceledVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("vault"), canceledStreamPda.toBuffer()],
+        program.programId,
+      );
+
+      const canceledVaultTokenAccount = await getAssociatedTokenAddress(
+        tokenMint,
+        canceledVaultPda,
+        true,
+      );
+
+      const creatorTokenAccount = await getAssociatedTokenAddress(
+        tokenMint,
+        creator.publicKey,
+      );
+
+      try {
+        await getAccount(provider.connection, creatorTokenAccount);
+      } catch (error) {
+        await createAssociatedTokenAccount(
+          provider.connection,
+          creator.payer,
+          tokenMint,
+          creator.publicKey,
+        );
+      }
+
+      await program.methods
+        .initializeTokenVault()
+        .accounts({
+          creator: creator.publicKey,
+          stream: canceledStreamPda,
+          vault: canceledVaultPda,
+          tokenMint: tokenMint,
+          vaultTokenAccount: canceledVaultTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      await program.methods
+        .cancelStream()
+        .accounts({
+          stream: canceledStreamPda,
+          creator: creator.publicKey,
+        })
+        .rpc();
+
+      try {
+        await program.methods
+          .resolvePrediction(1)
+          .accounts({
+            creator: creator.publicKey,
+            stream: canceledStreamPda,
+            vault: canceledVaultPda,
+            creatorTokenAccount,
+            vaultTokenAccount: canceledVaultTokenAccount,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .rpc();
+
+        expect.fail("Should have failed with canceled stream");
+      } catch (error) {
+        const logMessages =
+          ((error as SendTransactionError).logs ??
+            (error as any).errorLogs ??
+            []) as string[];
+        const combinedMessage = [
+          (error as any).toString(),
+          logMessages.join(" "),
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        expect(combinedMessage).to.include("Canceled");
+      }
+    });
+
     it("Prevents double activation", async () => {
       // Check current stream state
       // Create a unique stream for this test to avoid state pollution

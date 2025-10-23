@@ -222,6 +222,8 @@ pub mod cyphercast {
         require!(!stream.is_active, CypherCastError::StreamStillActive);
         // The stream cannot be resolved more than once.
         require!(!stream.is_resolved, CypherCastError::AlreadyResolved);
+        // Streams that have been canceled cannot be resolved.
+        require!(stream.canceled_at == 0, CypherCastError::Canceled);
         // Validate the winning choice against the maximum allowed choices.
         require!(
             winning_choice <= MAX_CHOICES,
