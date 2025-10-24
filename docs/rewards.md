@@ -130,6 +130,3 @@ Monitor these events for real-time updates:
 3. **State Validation**: All operations check stream state (active, resolved, canceled)
 4. **Double Spend Protection**: Flags prevent multiple claims/refunds
 5. **Precision Handling**: Integer math prevents floating point errors
-```
-
-## 🛠️ **Step 5: Fix the Tests**

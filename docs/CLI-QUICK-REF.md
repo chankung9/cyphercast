@@ -1,160 +1,53 @@
 # CypherCast CLI Quick Reference
 
-One-page quick reference for testing CypherCast program.
+Single-page cheat sheet for running the local demo flow with the `cli/direct-cli.js` script. The CLI interacts directly with the Anchor program over RPC and is ideal for stakeholder walkthroughs.
 
 ## 🚀 Quick Start
-
 ```bash
 # 1. Install dependencies
 npm install
 
 # 2. Make CLI executable
-chmod +x cli-tool.js
+chmod +x cli/direct-cli.js
 
-# 3. Run full demo
-node cli-tool.js demo
+# 3. Run full scripted demo (creates, predicts, resolves, claims)
+node cli/direct-cli.js demo
 ```
 
----
+## 📋 Core Commands
+| Command | Syntax | Notes |
+| ------- | ------ | ----- |
+| `create` | `node cli/direct-cli.js create "<title>"` | Generates a unique stream id using the current timestamp |
+| `join` | `node cli/direct-cli.js join <streamPda>` | Records viewer participation (no stake yet) |
+| `predict` | `node cli/direct-cli.js predict <streamPda> <choice> <amount>` | Stakes SPL tokens (in SOL units for the demo mint) |
+| `end` | `node cli/direct-cli.js end <streamPda>` | Marks stream complete (legacy helper) |
+| `resolve` | `node cli/direct-cli.js resolve <streamPda> <winningChoice>` | Finalizes result and pays streamer tip |
+| `claim` | `node cli/direct-cli.js claim <predictionPda>` | Withdraws proportional rewards |
+| `fetch` | `node cli/direct-cli.js fetch <streamPda>` | Prints raw account data for verification |
+| `demo` | `node cli/direct-cli.js demo` | Runs the entire lifecycle with sample viewers |
 
-## 📋 Commands
+> **Tip:** Pass `--help` to any command for inline usage hints.
 
-### Interactive Mode
-
+## 🔄 Typical Workflow
 ```bash
-node cli-tool.js
+node cli/direct-cli.js create "Gaming Night"           # Step 1
+node cli/direct-cli.js join <streamPda>                 # Step 2
+node cli/direct-cli.js predict <streamPda> 3 5          # Step 3
+node cli/direct-cli.js resolve <streamPda> 3            # Step 4
+node cli/direct-cli.js claim <predictionPda>            # Step 5
 ```
 
-### Command-Line Mode
+## 🧰 Environment
+| Item | Value |
+| ---- | ----- |
+| Program ID | `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF` |
+| RPC URL | `http://localhost:8899` |
+| Default Wallet | `~/.config/solana/id.json` |
+| Token Mint | Demo mint generated during test bootstrap |
 
-| Command               | Syntax                                          | Example                                        |
-| --------------------- | ----------------------------------------------- | ---------------------------------------------- |
-| **Create Stream**     | `node cli-tool.js create "<title>"`             | `node cli-tool.js create "Gaming Night"`       |
-| **Join Stream**       | `node cli-tool.js join <pda> [sol]`             | `node cli-tool.js join DKfG7...xyz 0.01`       |
-| **Submit Prediction** | `node cli-tool.js predict <pda> <choice> [sol]` | `node cli-tool.js predict DKfG7...xyz 5 0.005` |
-| **End Stream**        | `node cli-tool.js end <pda>`                    | `node cli-tool.js end DKfG7...xyz`             |
-| **Claim Reward**      | `node cli-tool.js claim <pda>`                  | `node cli-tool.js claim EKfH8...abc`           |
-| **Fetch Stream**      | `node cli-tool.js fetch <pda>`                  | `node cli-tool.js fetch DKfG7...xyz`           |
-| **Full Demo**         | `node cli-tool.js demo`                         | `node cli-tool.js demo`                        |
+## ✅ Troubleshooting
+- Run `solana-keygen new` if the default wallet path is missing.
+- Use `solana airdrop 5` to top up your local wallet before staking.
+- Delete the `.anchor` directory to force a fresh program deploy if PDAs change.
 
----
-
-## 📊 Program Details
-
-| Item               | Value                                          |
-| ------------------ | ---------------------------------------------- |
-| **Program ID**     | `5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF` |
-| **Network**        | Local (http://localhost:8899)                  |
-| **IDL Path**       | `./target/idl/cyphercast.json`                 |
-| **Default Wallet** | `~/.config/solana/id.json`                     |
-
----
-
-## 🎯 Common Workflows
-
-### Create & Join a Stream
-
-```bash
-# 1. Create
-node cli-tool.js create "My Stream"
-# Output: Stream PDA: DKfG7...xyz
-
-# 2. Join
-node cli-tool.js join DKfG7...xyz 0.01
-```
-
-### Submit Prediction & Claim
-
-```bash
-# 1. Predict
-node cli-tool.js predict DKfG7...xyz 5 0.005
-# Output: Prediction PDA: EKfH8...abc
-
-# 2. End Stream
-node cli-tool.js end DKfG7...xyz
-
-# 3. Claim
-node cli-tool.js claim EKfH8...abc
-```
-
-### Complete Flow
-
-```bash
-node cli-tool.js demo
-```
-
----
-
-## 🔧 Solana CLI Commands
-
-```bash
-# Check balance
-solana balance
-
-# Get test SOL
-solana airdrop 2
-
-# View program
-solana program show 5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF
-
-# Monitor logs
-solana logs 5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF
-
-# Check cluster
-solana cluster-version
-```
-
----
-
-## ⚠️ Common Errors
-
-| Error                      | Solution                   |
-| -------------------------- | -------------------------- |
-| **Cannot find module**     | `npm install`              |
-| **Blockhash not found**    | Check validator is running |
-| **Insufficient funds**     | `solana airdrop 2`         |
-| **Account already exists** | Use different stream ID    |
-| **Stream not active**      | Can't join ended streams   |
-| **Invalid choice**         | Use 0-10 only              |
-
----
-
-## 🎬 Demo Recording Steps
-
-```bash
-# Terminal 1: Monitor logs
-solana logs 5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF
-
-# Terminal 2: Run demo
-node cli-tool.js demo
-
-# Screen record both terminals showing:
-# - Program logs in real-time
-# - CLI output with each step
-# - Success messages and transaction IDs
-```
-
----
-
-## 📝 Testing Checklist
-
-- [ ] Run `node cli-tool.js demo` successfully
-- [ ] Create stream manually
-- [ ] Join with custom stake amount
-- [ ] Submit prediction with different choices
-- [ ] End stream as creator
-- [ ] Claim reward
-- [ ] Verify all transactions on-chain
-
----
-
-## 🔗 Quick Links
-
-- **Full Testing Guide**: `TESTING.md`
-- **Local Setup**: `LOCAL_SETUP.md`
-- **Copilot Instructions**: `.github/copilot-instructions.md`
-- **Program Source**: `programs/cyphercast/src/lib.rs`
-
----
-
-**Pro Tip:** Save PDAs from output - you'll need them for subsequent commands!
+Refer to `docs/TESTING.md` for automated coverage details or `docs/EVENT_STORMING.md` to narrate the same journey for non-technical audiences.
