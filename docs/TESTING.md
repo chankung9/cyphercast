@@ -3,6 +3,11 @@
 ## Overview
 CypherCast ships with an automated test suite built on Anchor and TypeScript (Mocha + Chai). Running the suite launches a local Solana validator, deploys the program, and exercises the full staking and reward lifecycle introduced in Phase 2.5.
 
+
+## Requirements
+To run the test suite, you must have the following minimum versions installed:
+- **Solana CLI**: v1.16.0 or higher
+- **Anchor**: v0.28.0 or higher
 ## Quick Commands
 ```bash
 # Install dependencies (once)
