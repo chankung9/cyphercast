@@ -73,7 +73,7 @@ Study these repos to understand folder structure, wallet modal configuration, an
 
 ## Development Tooling Expectations
 
-- Use [PNPM](https://pnpm.io/) or [Yarn Berry] for workspace support (monorepo-friendly) unless downstream repo mandates npm.
+- Use [PNPM](https://pnpm.io/) or [Yarn Berry](https://yarnpkg.com/) for workspace support (monorepo-friendly) unless downstream repo mandates npm.
 - Linting:
   - ESLint with React, TypeScript, and security plugins (`eslint-plugin-security`, `eslint-plugin-import`).
   - Prettier for formatting consistency; integrate with Husky pre-commit hooks.
