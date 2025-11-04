@@ -9,7 +9,8 @@
     "test": "anchor test",
     "test:skip-validator": "anchor test --skip-local-validator",
     "idl": "anchor idl build --out-ts target/types/cyphercast.ts",
-    "clean": "anchor clean"
+    "clean": "anchor clean",
+    "check:links": "./scripts/check-links.sh"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",

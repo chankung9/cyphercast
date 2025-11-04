@@ -28,14 +28,14 @@ Working on: `/home/worrapong-l/Workspace/solana/cyphercast/programs`
    - SPL token setup and minting
    - Complete end-to-end flow testing
 
-3. **`docs/PHASE2-IMPLEMENTATION.md`**
+3. **`docs/archive/phase2/IMPLEMENTATION.md`**
 
    - Detailed implementation documentation
    - Code examples for each task
    - Architecture diagrams
    - Build and test instructions
 
-4. **`docs/PHASE2-QUICK-REF.md`**
+4. **`docs/archive/phase2/QUICK-REF.md`**
 
    - Developer quick reference guide
    - Usage examples for each instruction
@@ -43,7 +43,7 @@ Working on: `/home/worrapong-l/Workspace/solana/cyphercast/programs`
    - Frontend integration examples
    - Error handling guide
 
-5. **`docs/PHASE2-COMPLETE.md`**
+5. **`docs/archive/phase2/COMPLETE.md`**
    - Executive summary of all changes
    - Statistics and metrics
    - Demo-ready feature checklist
@@ -352,10 +352,10 @@ await program.methods
 
 | Document               | Location                        | Purpose                        |
 | ---------------------- | ------------------------------- | ------------------------------ |
-| Implementation Details | `docs/PHASE2-IMPLEMENTATION.md` | Technical implementation guide |
-| Quick Reference        | `docs/PHASE2-QUICK-REF.md`      | Developer usage guide          |
-| Completion Summary     | `docs/PHASE2-COMPLETE.md`       | Executive summary              |
-| This Summary           | `docs/PHASE2-SUMMARY.md`        | Quick overview                 |
+| Implementation Details | `docs/archive/phase2/IMPLEMENTATION.md` | Technical implementation guide |
+| Quick Reference        | `docs/archive/phase2/QUICK-REF.md`      | Developer usage guide          |
+| Completion Summary     | `docs/archive/phase2/COMPLETE.md`       | Executive summary              |
+| This Summary           | `docs/archive/phase2/SUMMARY.md`        | Quick overview                 |
 
 ---
 
@@ -423,7 +423,7 @@ For Hackathon Presentation:
 
 - Program: `programs/cyphercast/src/lib.rs`
 - Tests: `tests/phase2-token-vault.ts`
-- Docs: `docs/PHASE2-*.md`
+- Docs: `docs/archive/phase2/*.md`
 
 ---
 

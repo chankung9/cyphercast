@@ -4,11 +4,11 @@
 
 | Document                                               | Purpose                          | Audience                |
 | ------------------------------------------------------ | -------------------------------- | ----------------------- |
-| [PHASE2-SUMMARY.md](./PHASE2-SUMMARY.md)               | Quick overview and statistics    | Everyone                |
-| [PHASE2-QUICK-REF.md](./PHASE2-QUICK-REF.md)           | Usage examples and code snippets | Developers              |
-| [PHASE2-IMPLEMENTATION.md](./PHASE2-IMPLEMENTATION.md) | Technical implementation details | Technical team          |
-| [PHASE2-COMPLETE.md](./PHASE2-COMPLETE.md)             | Executive summary                | Management/Stakeholders |
-| [PHASE2-VERIFICATION.md](./PHASE2-VERIFICATION.md)     | Verification checklist           | QA/Testing team         |
+| [SUMMARY.md](./SUMMARY.md)                             | Quick overview and statistics    | Everyone                |
+| [QUICK-REF.md](./QUICK-REF.md)                         | Usage examples and code snippets | Developers              |
+| [IMPLEMENTATION.md](./IMPLEMENTATION.md)               | Technical implementation details | Technical team          |
+| [COMPLETE.md](./COMPLETE.md)                           | Executive summary                | Management/Stakeholders |
+| [VERIFICATION.md](./VERIFICATION.md)                   | Verification checklist           | QA/Testing team         |
 
 ---
 
@@ -33,7 +33,7 @@
 
 ### For Developers
 
-1. Read [PHASE2-QUICK-REF.md](./PHASE2-QUICK-REF.md) for code examples
+1. Read [QUICK-REF.md](./QUICK-REF.md) for code examples
 2. Review the test file: `tests/phase2-token-vault.ts`
 3. Check the program: `programs/cyphercast/src/lib.rs`
 
@@ -144,12 +144,12 @@ cyphercast/
 ```
 cyphercast/
 ├── docs/
-│   ├── PHASE2-SUMMARY.md .................. NEW ✨
-│   ├── PHASE2-QUICK-REF.md ................ NEW ✨
-│   ├── PHASE2-IMPLEMENTATION.md ........... NEW ✨
-│   ├── PHASE2-COMPLETE.md ................. NEW ✨
-│   ├── PHASE2-VERIFICATION.md ............. NEW ✨
-│   └── PHASE2-INDEX.md .................... NEW ✨ (this file)
+│   ├── SUMMARY.md .................. NEW ✨
+│   ├── QUICK-REF.md ................ NEW ✨
+│   ├── IMPLEMENTATION.md ........... NEW ✨
+│   ├── COMPLETE.md ................. NEW ✨
+│   ├── VERIFICATION.md ............. NEW ✨
+│   └── INDEX.md .................... NEW ✨ (this file)
 ```
 
 ---
@@ -182,7 +182,7 @@ anchor-spl = "0.31.1"  # For SPL token integration
 
 ### Immediate (Frontend Team)
 
-- [ ] Review [PHASE2-QUICK-REF.md](./PHASE2-QUICK-REF.md)
+- [ ] Review [QUICK-REF.md](./QUICK-REF.md)
 - [ ] Update `app/client.ts` with new instructions
 - [ ] Add token selection UI
 - [ ] Display vault balances
@@ -214,7 +214,7 @@ anchor-spl = "0.31.1"  # For SPL token integration
 
 - Program: `programs/cyphercast/src/lib.rs`
 - Tests: `tests/phase2-token-vault.ts`
-- Docs: `docs/PHASE2-*.md`
+- Docs: `docs/archive/phase2/*.md`
 
 ---
 
@@ -249,10 +249,10 @@ All requirements implemented, tested, and documented.
 
 ### Documentation
 
-- 📖 [Implementation Guide](./PHASE2-IMPLEMENTATION.md)
-- 🚀 [Quick Reference](./PHASE2-QUICK-REF.md)
-- ✅ [Verification Checklist](./PHASE2-VERIFICATION.md)
-- 📊 [Summary](./PHASE2-SUMMARY.md)
+- 📖 [Implementation Guide](./IMPLEMENTATION.md)
+- 🚀 [Quick Reference](./QUICK-REF.md)
+- ✅ [Verification Checklist](./VERIFICATION.md)
+- 📊 [Summary](./SUMMARY.md)
 
 ### Code
 

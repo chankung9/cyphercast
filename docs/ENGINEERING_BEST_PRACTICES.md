@@ -82,6 +82,7 @@ These guidelines define the default architecture, coding style, and development 
 - Scripts:
   - `pnpm lint`, `pnpm test`, `pnpm typecheck`, `pnpm format`.
   - Add `pnpm check:wallet` to run wallet integration smoke tests locally.
+  - Run `npm run check:links` (wrapper around `scripts/check-links.sh`) before opening PRs to ensure documentation references stay valid.
 - Git hooks via Husky:
   - `pre-commit`: `lint-staged` (eslint, prettier --check).
   - `pre-push`: `pnpm test --filter frontend`, `pnpm typecheck`.
@@ -99,6 +100,7 @@ These guidelines define the default architecture, coding style, and development 
 - Update integration docs in Codex HQ (`projects/cyphercast/docs/`); sync downstream via doc-sync checklist.
 - Log significant engineering learnings in `reports/projects/cyphercast/staff_reports/`.
 - Add Storybook docs for complex components and ensure designers sign off on changes.
+- For documentation-heavy changes, include a passing `npm run check:links` result in the PR description.
 
 ## Security & Compliance
 

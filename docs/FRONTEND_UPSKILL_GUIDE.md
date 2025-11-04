@@ -60,13 +60,13 @@ Evaluate the following combinations to deliver a polished, maintainable UI:
 
 ## Reference Templates & Scaffolds
 
-- [Solana dApp Scaffold (React/Next.js)](https://github.com/solana-developers/dapp-scaffold)  
+- [Solana dApp Scaffold (React/Next.js)](https://github.com/solana-developers/solana-dapp-next)  
   Ready-made wallet adapter integration, Tailwind setup, example transactions.
-- [solana-labs/wallet-adapter examples](https://github.com/solana-labs/wallet-adapter/tree/master/packages/example)  
+- [solana-labs/wallet-adapter examples](https://github.com/solana-labs/wallet-adapter/tree/master/packages/starter/example)  
   Demonstrates wallet contexts, modals, and multi-wallet support.
 - [Anchor React Template (metaplex-foundation)](https://github.com/metaplex-foundation/js-examples)  
   Anchor-client integration with typed IDLs.
-- [Create Web3 Dapp (Vite + TypeScript)](https://github.com/solana-developers/solana-vite-template)  
+- [Create Web3 Dapp (Vite + TypeScript)](https://github.com/solana-developers/template-react-vite-tailwind)  
   Lightweight alternative if Next.js routing is not required.
 
 Study these repos to understand folder structure, wallet modal configuration, and environment variable hygiene.
