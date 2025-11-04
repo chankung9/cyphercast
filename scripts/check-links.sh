@@ -45,7 +45,7 @@ fi
 STATUS=0
 for file in "${TARGETS[@]}"; do
   echo "Checking links in ${file}"
-  if ! npx -y markdown-link-check "${file}" -q -p -c "${CONFIG_FILE}"; then
+  if ! npx -y markdown-link-check "${file}" -q -c "${CONFIG_FILE}"; then
     STATUS=1
   fi
 done
