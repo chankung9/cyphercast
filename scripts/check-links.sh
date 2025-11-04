@@ -9,7 +9,7 @@ Runs markdown-link-check against the provided markdown files. If no paths are
 supplied, the script scans all docs/ markdown files.
 
 Dependencies:
-  - Node.js 18+
+  - Node.js 20+
   - npx (ships with Node.js)
 USAGE
 }
