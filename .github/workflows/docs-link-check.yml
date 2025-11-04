@@ -1,0 +1,20 @@
+name: Docs Link Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'scripts/check-links.sh'
+      - '.markdown-link-check.json'
+      - '.github/workflows/docs-link-check.yml'
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run link checker
+        run: ./scripts/check-links.sh

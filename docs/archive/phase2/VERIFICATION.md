@@ -27,10 +27,10 @@ Use this checklist to verify the Phase 2 implementation is complete and working.
 
 ### Documentation
 
-- [x] `docs/PHASE2-IMPLEMENTATION.md` exists
-- [x] `docs/PHASE2-QUICK-REF.md` exists
-- [x] `docs/PHASE2-COMPLETE.md` exists
-- [x] `docs/PHASE2-SUMMARY.md` exists
+- [x] `docs/archive/phase2/IMPLEMENTATION.md` exists
+- [x] `docs/archive/phase2/QUICK-REF.md` exists
+- [x] `docs/archive/phase2/COMPLETE.md` exists
+- [x] `docs/archive/phase2/SUMMARY.md` exists
 
 ---
 
@@ -565,7 +565,7 @@ All tasks completed, verified, and documented.
 
 1. **Frontend Team:**
 
-   - Review `docs/PHASE2-QUICK-REF.md`
+   - Review `docs/archive/phase2/QUICK-REF.md`
    - Update client.ts with new instructions
    - Add token UI components
    - Test integration
