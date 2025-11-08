@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { AppWalletProvider } from "@/components/providers/wallet-provider";
 import { ConnectWalletButton } from "@/components/wallet/connect-button";
+import "@solana/wallet-adapter-react-ui/styles.css";
 import "./globals.css";
 
 const geistSans = Geist({

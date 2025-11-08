@@ -3,26 +3,30 @@
 import { PropsWithChildren, useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { clusterApiUrl } from '@solana/web3.js';
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
   UnsafeBurnerWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-import '@solana/wallet-adapter-react-ui/styles.css';
-
-import { env } from '@/lib/env';
+import { DEFAULT_COMMITMENT, SOLANA_RPC_ENDPOINT } from '@/lib/solana/connection';
 
 export function AppWalletProvider({ children }: PropsWithChildren) {
-  const endpoint = env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('devnet');
+  const endpoint = SOLANA_RPC_ENDPOINT;
 
-  const wallets = useMemo(
-    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new UnsafeBurnerWalletAdapter()],
-    [],
-  );
+  const wallets = useMemo(() => {
+    const adapters: (
+      PhantomWalletAdapter | 
+      SolflareWalletAdapter | 
+      UnsafeBurnerWalletAdapter
+    )[] = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
+    if (process.env.NODE_ENV !== 'production') {
+      adapters.push(new UnsafeBurnerWalletAdapter());
+    }
+    return adapters;
+  }, []);
 
   return (
-    <ConnectionProvider endpoint={endpoint} config={{ commitment: 'confirmed' }}>
+    <ConnectionProvider endpoint={endpoint} config={{ commitment: DEFAULT_COMMITMENT }}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
