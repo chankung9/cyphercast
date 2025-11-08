@@ -94,6 +94,15 @@ pnpm app:test
 pnpm app:storybook -- --ci
 ```
 
+Environment variables needed by the Next.js app live in `app/.env` (copy from `.env.example`):
+
+```
+NEXT_PUBLIC_SOLANA_RPC_URL=http://localhost:8899
+NEXT_PUBLIC_CYPHERCAST_PROGRAM_ID=5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF
+```
+
+The RPC URL should point to Surfpool/localnet during development so wallet adapters can sign sample transactions.
+
 If you are referencing the Codex HQ repository, see `projects/cyphercast/tasks/roadmap_frontend_001.yaml` for the scaffold acceptance criteria and `projects/cyphercast/docs/DEV_ROADMAP.md` for phase context. In this downstream repo, consult the HQ docs or linked PRs when coordinating frontend milestones.
 
 ---

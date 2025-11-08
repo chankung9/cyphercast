@@ -1,0 +1,6 @@
+export const env = {
+  NEXT_PUBLIC_SOLANA_RPC_URL:
+    process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? 'http://localhost:8899',
+  NEXT_PUBLIC_CYPHERCAST_PROGRAM_ID:
+    process.env.NEXT_PUBLIC_CYPHERCAST_PROGRAM_ID ?? '5a3LkJ73xWyYd7M9jqZtbGY1p9gyJfzSXvHEJdY9ohTF',
+};

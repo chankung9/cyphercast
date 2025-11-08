@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { AppWalletProvider } from "@/components/providers/wallet-provider";
+import { ConnectWalletButton } from "@/components/wallet/connect-button";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,10 +32,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground antialiased`}
-      >
-        <div className="flex min-h-screen flex-col">
+      <body className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground antialiased`}>
+        <AppWalletProvider>
+          <div className="flex min-h-screen flex-col">
           <header className="border-b border-border/60 bg-background/70 backdrop-blur">
             <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
               <Link href="/" className="text-lg font-semibold tracking-tight">
@@ -49,14 +51,7 @@ export default function RootLayout({
                   </Link>
                 ))}
               </nav>
-              <a
-                href="https://github.com/chankung9/cyphercast"
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                GitHub
-              </a>
+              <ConnectWalletButton />
             </div>
           </header>
           <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">{children}</main>
@@ -66,7 +61,8 @@ export default function RootLayout({
               <span>Asia/Bangkok · Solana Localnet</span>
             </div>
           </footer>
-        </div>
+          </div>
+        </AppWalletProvider>
       </body>
     </html>
   );
