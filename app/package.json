@@ -1,45 +1,42 @@
 {
-  "name": "cyphercast-app",
+  "name": "app",
   "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.31.1",
-    "@solana/web3.js": "^1.87.6",
-    "@solana/wallet-adapter-base": "^0.9.23",
-    "@solana/wallet-adapter-react": "^0.15.35",
-    "@solana/wallet-adapter-react-ui": "^0.9.35",
-    "@solana/wallet-adapter-wallets": "^0.19.32",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
+    "clsx": "^2.1.1",
+    "next": "16.0.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
-    "@types/node": "^20.10.6",
-    "@types/react": "^18.2.46",
-    "@types/react-dom": "^18.2.18",
-    "typescript": "^5.3.3"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "@chromatic-com/storybook": "^4.1.2",
+    "@storybook/addon-a11y": "^10.0.4",
+    "@storybook/addon-docs": "^10.0.4",
+    "@storybook/addon-onboarding": "^10.0.4",
+    "@storybook/addon-vitest": "^10.0.4",
+    "@storybook/nextjs-vite": "^10.0.4",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitest/browser-playwright": "^4.0.7",
+    "@vitest/coverage-v8": "^4.0.7",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.1",
+    "eslint-plugin-storybook": "^10.0.4",
+    "playwright": "^1.56.1",
+    "storybook": "^10.0.4",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^4.0.7"
   }
 }
