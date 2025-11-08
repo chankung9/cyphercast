@@ -94,7 +94,7 @@ pnpm app:test
 pnpm app:storybook -- --ci
 ```
 
-See `projects/cyphercast/tasks/roadmap_frontend_001.yaml` for the scaffold acceptance criteria and `docs/DEV_ROADMAP.md` for phase context.
+If you are referencing the Codex HQ repository, see `projects/cyphercast/tasks/roadmap_frontend_001.yaml` for the scaffold acceptance criteria and `projects/cyphercast/docs/DEV_ROADMAP.md` for phase context. In this downstream repo, consult the HQ docs or linked PRs when coordinating frontend milestones.
 
 ---
 
