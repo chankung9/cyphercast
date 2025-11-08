@@ -75,6 +75,29 @@ More detail: [docs/TESTING.md](./docs/TESTING.md) & [docs/CLI-QUICK-REF.md](./do
 
 ---
 
+## 🖥️ Frontend Scaffold (Next.js)
+The new dApp lives under `app/` and uses pnpm workspaces.
+
+```bash
+# Enable pnpm if it's not already available
+corepack enable pnpm
+
+# Install workspace dependencies (Anchor + frontend)
+pnpm install
+
+# Start the Next.js dev server from the repo root
+pnpm app:dev
+
+# Additional tooling shortcuts
+pnpm app:lint
+pnpm app:test
+pnpm app:storybook -- --ci
+```
+
+If you are referencing the Codex HQ repository, see `projects/cyphercast/tasks/roadmap_frontend_001.yaml` for the scaffold acceptance criteria and `projects/cyphercast/docs/DEV_ROADMAP.md` for phase context. In this downstream repo, consult the HQ docs or linked PRs when coordinating frontend milestones.
+
+---
+
 ## 🧱 Tech Snapshot
 | Layer | Highlights |
 | ----- | ---------- |

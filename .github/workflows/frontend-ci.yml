@@ -1,0 +1,41 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/frontend-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Enable pnpm
+        run: corepack enable pnpm
+      - name: Install dependencies
+        run: pnpm install
+      - name: Lint frontend
+        run: pnpm app:lint
+      - name: Test frontend
+        run: pnpm app:test
+      - name: Storybook smoke
+        run: pnpm --filter app storybook --ci --quiet --port 6006 &
+      - name: Wait for Storybook startup
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 6006; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Storybook did not start" && exit 1
+      - name: Kill Storybook
+        if: always()
+        run: pkill -f "storybook dev" || true
