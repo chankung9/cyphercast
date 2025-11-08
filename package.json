@@ -10,7 +10,13 @@
     "test:skip-validator": "anchor test --skip-local-validator",
     "idl": "anchor idl build --out-ts target/types/cyphercast.ts",
     "clean": "anchor clean",
-    "check:links": "./scripts/check-links.sh"
+    "check:links": "./scripts/check-links.sh",
+    "app:dev": "pnpm --filter app dev",
+    "app:build": "pnpm --filter app build",
+    "app:start": "pnpm --filter app start",
+    "app:lint": "pnpm --filter app lint",
+    "app:test": "pnpm --filter app test",
+    "app:storybook": "pnpm --filter app storybook"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
